@@ -1,0 +1,109 @@
+/* Menu styling */
+
+.mainMenu{
+    width:400px;
+    height:auto;
+    background:white;
+    margin:0 auto 0 auto;
+    padding-top:20px;
+}
+
+.menuButton{
+    width:60%;
+    height:auto;
+    padding:10px;
+    margin:20px auto 20px auto;
+    background:lightblue;
+}
+
+
+/* In Game Styling */
+.playerShip{
+    position:absolute;
+    bottom:50px;
+    width:75px;
+    z-index: 1;
+}
+html{
+    overflow-y:hidden !important;
+}
+body{
+    overflow-y:hidden !important;
+}
+.enemyShip{
+    position:absolute;
+    top:50px;
+    width:75px;
+    z-index:1;
+    transform: rotate(180deg);
+}
+.playingField{
+    width:100vw;
+    height:100vh;
+    background:url(images/space.jpg);
+    text-align:center;
+    overflow:hidden;
+}
+body{
+    margin:0px;
+}
+.primary{
+    width:5px;
+    height:20px;
+    background:rgba(255, 255, 255, 0);
+    border-left:2px solid rgb(87, 164, 252);
+    border-right:2px solid rgb(87, 164, 252);
+    
+}
+.boss{
+    width:300px;
+    margin-top:50px;
+    transform: rotate(180deg);
+}
+
+.bossBullet{
+    position:absolute;
+    width:10px;
+    height:10px;
+    background:purple;
+    border:2px solid white;
+    box-shadow: 0px 0px 10px 10px white;
+    border-radius:20px;
+}
+.bossDeath{
+    position:absolute;
+    width:300px;
+    height:300px;
+    border-radius: 50%;
+    background: lightblue;
+    box-shadow: 0px 0px 10px 10px white, inset 0px 0px 10px 10px rgb(255, 153, 0);
+
+}
+.enemyBullet{
+    position:absolute;
+    width:2px;
+    height:15px;
+    background:white;
+    border-radius:4px;
+    box-shadow: 0px 0px 1px 1px rgb(255, 251, 0);
+}
+.enemyDeath{
+    position:absolute;
+    width:75px;
+    height:75px;
+    background:rgb(121, 238, 121);
+    border-radius:50%;
+    box-shadow: 0px 0px 10px 10px rgb(236, 236, 236), inset 0px 0px 10px 10px rgb(248, 141, 0);
+}
+.primaryExplode{
+    position:absolute;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:yellow;
+    box-shadow: 0px 0px 5px 5px rgba(255, 166, 0, 0.582), inset 0px 0px 5px 5px rgba(255, 255, 255, 0.582);
+    z-index: 2;
+    transition:200ms;
+    
+}
+
