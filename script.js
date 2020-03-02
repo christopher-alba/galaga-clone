@@ -2,7 +2,7 @@
 // global variables
 let enemyID = 0;
 var enemies = [];
-let enemiesLeft = 2;
+let enemiesLeft = 1;
 let totalRounds = 0;
 let roundCounter = 0;
 let currentBossHP = 20;
@@ -13,13 +13,15 @@ let bossBulletIndex = 0;
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
 let gameOn = true;
+let enemyHealth = 1;
 
 
 var sensor1;
 var sensor2;
+var sensor3;
 // Objects
 var playerShip = {
-    health: 10,
+    health: 20,
     experience: 0,
     powerups: {
 
@@ -129,6 +131,7 @@ function checkEnemyHit(){
                     }});
                     playerShip.scoreMultiplier+= totalRounds*totalRounds;
                     playerShip.score += 1000*playerShip.scoreMultiplier;
+                    playerShip.health += 5;
                     boss.spawned = false;
                     currentBossHP += 20;
                     boss.health = currentBossHP;
@@ -162,7 +165,9 @@ function checkEnemyHit(){
 
                 if(enemyShip != "empty"){
                     let enemyShipBox = enemyShip.getBoundingClientRect();
-
+                    playerShip.health+=0.2;
+                    console.log(playerShip.health);
+                    
                     playerShip.scoreMultiplier += 1;
                     playerShip.score += 100*playerShip.scoreMultiplier;
                     let enemyScore = document.createElement("div");
@@ -247,6 +252,7 @@ function endGame(){
     }
     clearInterval(sensor1);
     clearInterval(sensor2);
+    clearInterval(sensor3);
     toggleGUI();
     toggleDeathScreen();
     
@@ -299,7 +305,7 @@ function startGame(){
     displayPlayer();
     toggleGUI();
     
-    let numberOfEnemies = 2;
+    let numberOfEnemies = 1;
     displayEnemy(numberOfEnemies);
 
     
@@ -309,6 +315,26 @@ function startGame(){
         checkEnemyHit();
         checkPlayerHit();
         updateGUI();
+
+     
+    }
+
+    
+        
+        
+    },45);
+
+
+    sensor2 = setInterval(function(){
+        if(gameOn == true){
+            enemyShots();
+        }
+        
+        
+       
+    },2000);
+
+    sensor3 = setInterval(function(){
         if(enemiesLeft == 0){
     
             
@@ -319,6 +345,8 @@ function startGame(){
                 totalRounds++;
                 enemiesLeft = numberOfEnemies;
                 currentEnemySmallDamage++;
+                console.log(roundCounter);
+                
                 roundCounter++;
                 
                 displayBoss();
@@ -333,8 +361,16 @@ function startGame(){
                     totalRounds++;
                     roundCounter++;
                     
+                    if(numberOfEnemies < 20){
+                        numberOfEnemies += 1;
+                        enemyHealth+= 0.25;
+                        playerShip.primaryDamage+=0.1;
+                    }
+                    else{
+                        enemyHealth += 3*totalRounds;
+                        playerShip.primaryDamage += 1.2*totalRounds;
+                    }
                     
-                    numberOfEnemies += 2;
                     enemiesLeft = numberOfEnemies;
                     displayEnemy(numberOfEnemies);
                 }
@@ -344,20 +380,7 @@ function startGame(){
             }
             
         }
-    }
-    
-        
-        
-    },45);
-
-    sensor2 = setInterval(function(){
-        if(gameOn == true){
-            enemyShots();
-        }
-        
-        
-       
-    },2000);
+    },1000);
 }
 function updateGUI(){
     // update each of the stats in the gui with new data
@@ -485,6 +508,34 @@ function displayEnemy(numberOfEnemies){
         
 
         let enemyShip = document.createElement("img");
+        switch(totalRounds){
+            case totalRounds<3:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<6:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<9:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<12:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<15:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<18:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<21:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+            case totalRounds<24:
+                enemyShip.src = "images/enemyShip.png";
+                break;
+
+
+        }
         enemyShip.src = "images/enemyShip.png";
         enemyShip.classList.add("enemyShip");
         enemyShip.classList.add(enemyID);
@@ -505,7 +556,7 @@ function displayEnemy(numberOfEnemies){
     
 }
 function Enemy(){
-    this.health = 5;
+    this.health = enemyHealth;
     this.damage = currentEnemySmallDamage;
 
     // get all displayed enemy ships
