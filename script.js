@@ -3,6 +3,7 @@
 let enemyID = 0;
 var enemies = [];
 let enemiesLeft = 2;
+let totalRounds = 0;
 let roundCounter = 0;
 let currentBossHP = 20;
 let currentEnemySmallDamage = 1;
@@ -10,7 +11,9 @@ let chanceToFire = 10;
 let bulletIndex = 0;
 let bossBulletIndex = 0;
 let primaryIndex = 0;
+let primaryExplodeIndex = 0;
 let gameOn = true;
+
 
 var sensor1;
 var sensor2;
@@ -30,6 +33,7 @@ var playerShip = {
     tertiaryDamage:16,
     ultimateDamage:10,
     score: 0,
+    scoreMultiplier: 0
 
 
 }
@@ -49,16 +53,27 @@ function primaryHit(bulletBox){
     let gameArena = document.getElementsByClassName("playingField")[0];
     let bulletExplosion = document.createElement("div");
     bulletExplosion.classList.add("primaryExplode");
+    bulletExplosion.classList.add("primaryexplode"+ primaryExplodeIndex);
     
     bulletExplosion.style.top = bulletBox.top + "px";
     bulletExplosion.style.left = (bulletBox.left + 2 ) + "px";
     gameArena.appendChild(bulletExplosion);
-    $(".primaryExplode").animate({top:"50px"});
-    
-    
-    setTimeout(function(){
+
+   
+        
+   
+    $(".primaryexplode" + primaryExplodeIndex).animate({
+    opacity: 0.01,
+    }, {duration: 1000, queue:false, complete:function() {
         bulletExplosion.remove()
-    },200);
+    }});
+  
+    
+    primaryExplodeIndex++;
+
+
+      
+    
 }
 function checkEnemyHit(){
     let bullets = document.getElementsByClassName("primary");
@@ -87,6 +102,17 @@ function checkEnemyHit(){
                     
                 }
                 if(boss.health <= 0){
+
+                    let enemyScore = document.createElement("div");
+                    enemyScore.classList.add("largeScore");
+                    enemyScore.textContent = "+" + 1000*playerShip.scoreMultiplier;
+                    enemyScore.style.top = enemyBossBox.top + "px";
+                    enemyScore.style.left = enemyBossBox.left + "px";
+                    gameArena.appendChild(enemyScore);
+                    setTimeout(function(){
+                        enemyScore.remove();
+                    },2000);
+
                     enemyBoss.remove();
                     let bossDeath = document.createElement("div");
                     bossDeath.classList.add("bossDeath");
@@ -94,9 +120,15 @@ function checkEnemyHit(){
                     bossDeath.style.left = enemyBossBox.left + "px";
                     gameArena.appendChild(bossDeath);
                     setTimeout(function(){
-                        bossDeath.remove();
-                    },1000)
-                    
+                        
+                    },1000);
+                    $(".bossDeath").animate({
+                        opacity: 0.01,
+                    }, {duration: 2000, queue:false, complete:function() {
+                        bossDeath.remove()
+                    }});
+                    playerShip.scoreMultiplier+= totalRounds*totalRounds;
+                    playerShip.score += 1000*playerShip.scoreMultiplier;
                     boss.spawned = false;
                     currentBossHP += 20;
                     boss.health = currentBossHP;
@@ -129,17 +161,35 @@ function checkEnemyHit(){
              if(enemies[j].health <= 0){
 
                 if(enemyShip != "empty"){
-                    
-                    let enemyDeath = document.createElement("div");
                     let enemyShipBox = enemyShip.getBoundingClientRect();
+
+                    playerShip.scoreMultiplier += 1;
+                    playerShip.score += 100*playerShip.scoreMultiplier;
+                    let enemyScore = document.createElement("div");
+                    enemyScore.classList.add("smallScore");
+                    enemyScore.textContent = "+" + 100*playerShip.scoreMultiplier;
+                    
+                    
+                    enemyScore.style.top = enemyShipBox.top + "px";
+                    enemyScore.style.left = enemyShipBox.left + "px";
+                   
+                    gameArena.appendChild(enemyScore);
+                    setTimeout(function(){
+                        enemyScore.remove();
+                    },1000);
+                
+
+                    let enemyDeath = document.createElement("div");
                     enemyDeath.classList.add("enemyDeath");
                     enemyDeath.style.top = enemyShipBox.top + "px";
                     enemyDeath.style.left = enemyShipBox.left + "px";
                     gameArena.appendChild(enemyDeath);
+                    $(".enemyDeath").animate({
+                        opacity: 0.01,
+                    }, {duration: 1500, queue:false, complete:function() {
+                        enemyDeath.remove()
+                    }});
 
-                    setTimeout(function(){
-                        enemyDeath.remove();
-                    },1000)
 
                     enemyShip.remove();
                     enemiesLeft--;
@@ -167,6 +217,7 @@ function checkPlayerHit(){
             primaryHit(projectileBox);
             enemyProjectiles[i].remove();
             playerShip.health--;
+            playerShip.scoreMultiplier = playerShip.scoreMultiplier/4;
             console.log(playerShip.health);
             
             
@@ -196,18 +247,18 @@ function endGame(){
     }
     clearInterval(sensor1);
     clearInterval(sensor2);
-    setTimeout(function(){
-        $(".mainMenu").slideToggle(1000);
-    },1000)
+    toggleGUI();
+    toggleDeathScreen();
     
     gameOn = false;
     resetStats();
 }
+
 function resetStats(){
     // global variables
 enemyID = 0;
 enemies = [];
-
+totalRounds = 0;
 enemiesLeft = 2;
 roundCounter = 0;
 currentBossHP = 20;
@@ -233,6 +284,7 @@ playerShip = {
     tertiaryDamage:16,
     ultimateDamage:10,
     score: 0,
+    scoreMultiplier: 0
 
 
 }
@@ -245,7 +297,8 @@ boss = {
 function startGame(){
     gameOn = true;
     displayPlayer();
-    displayGUI();
+    toggleGUI();
+    
     let numberOfEnemies = 2;
     displayEnemy(numberOfEnemies);
 
@@ -255,16 +308,19 @@ function startGame(){
         deleteEmpty();
         checkEnemyHit();
         checkPlayerHit();
+        updateGUI();
         if(enemiesLeft == 0){
     
             
             
             
-    
-            if(roundCounter == 1){
+           
+            if(roundCounter == 2){
+                totalRounds++;
                 enemiesLeft = numberOfEnemies;
                 currentEnemySmallDamage++;
                 roundCounter++;
+                
                 displayBoss();
                 displayEnemy(numberOfEnemies);
                 boss.spawned = true;
@@ -274,7 +330,10 @@ function startGame(){
             }
             else{
                 if(boss.spawned == false && roundCounter < 2){
+                    totalRounds++;
                     roundCounter++;
+                    
+                    
                     numberOfEnemies += 2;
                     enemiesLeft = numberOfEnemies;
                     displayEnemy(numberOfEnemies);
@@ -299,6 +358,13 @@ function startGame(){
         
        
     },2000);
+}
+function updateGUI(){
+    // update each of the stats in the gui with new data
+    $(".healthBar p").text(playerShip.health);
+    $(".round").text("Round: " + totalRounds);
+    $(".score").text("Score: " + playerShip.score);
+    $(".scoreMultiplier").text(playerShip.scoreMultiplier);
 }
 function enemyShots(){
 
@@ -615,7 +681,15 @@ switch (keyPressed) {
 
 
 }
+function toggleGUI(){
+    $(".playerGUI").toggle(500);
+}
+function toggleDeathScreen(){
+    $(".scoreDeath").text("Score: " + playerShip.score);
+    $(".roundDeath").text("Rounds Beaten: " + totalRounds);
+    $(".deathScreen").toggle(500);
 
+}
 $(document).keydown(function(event){
 
     
@@ -647,4 +721,14 @@ $(".startButton").click(function(){
     
     $(".mainMenu").slideToggle(1000);
     setTimeout(function(){ startGame();},1000);
+})
+$(".restartButton").click(function(){
+    
+    toggleDeathScreen();
+    setTimeout(function(){ startGame();},1000);
+})
+$(".returnMenu").click(function(){
+    toggleDeathScreen();
+    $(".mainMenu").slideToggle(1000);
+
 })
