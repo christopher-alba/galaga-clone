@@ -12,16 +12,30 @@ let bulletIndex = 0;
 let bossBulletIndex = 0;
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
+let primaryOn = false;
+var primaryRepeat;
 let gameOn = true;
 let enemyHealth = 1;
+let maximumHP = 20;
 
 
 var sensor1;
 var sensor2;
 var sensor3;
+
+let moveVel = 10;
+var moveLeft;
+var moveRight;
+var moveUp;
+var moveDown;
+
+let upCount = 0;
+let downCount = 0;
+let leftCount = 0;
+let rightCount = 0;
 // Objects
 var playerShip = {
-    health: 20,
+    health: maximumHP,
     experience: 0,
     powerups: {
 
@@ -31,9 +45,9 @@ var playerShip = {
     tertiary: true,
     ultimate: true,
     primaryDamage: 1,
-    secondaryDamage:4,
-    tertiaryDamage:16,
-    ultimateDamage:10,
+    secondaryDamage: 4,
+    tertiaryDamage: 16,
+    ultimateDamage: 10,
     score: 0,
     scoreMultiplier: 0
 
@@ -51,69 +65,71 @@ var boss = {
 
 
 // functions
-function primaryHit(bulletBox){
+function primaryHit(bulletBox) {
     let gameArena = document.getElementsByClassName("playingField")[0];
     let bulletExplosion = document.createElement("div");
     bulletExplosion.classList.add("primaryExplode");
-    bulletExplosion.classList.add("primaryexplode"+ primaryExplodeIndex);
-    
+    bulletExplosion.classList.add("primaryexplode" + primaryExplodeIndex);
+
     bulletExplosion.style.top = bulletBox.top + "px";
-    bulletExplosion.style.left = (bulletBox.left + 2 ) + "px";
+    bulletExplosion.style.left = (bulletBox.left + 2) + "px";
     gameArena.appendChild(bulletExplosion);
 
-   
-        
-   
+
+
+
     $(".primaryexplode" + primaryExplodeIndex).animate({
-    opacity: 0.01,
-    }, {duration: 1000, queue:false, complete:function() {
-        bulletExplosion.remove()
-    }});
-  
-    
+        opacity: 0.01,
+    }, {
+        duration: 1000, queue: false, complete: function () {
+            bulletExplosion.remove()
+        }
+    });
+
+
     primaryExplodeIndex++;
 
 
-      
-    
+
+
 }
-function checkEnemyHit(){
+function checkEnemyHit() {
     let bullets = document.getElementsByClassName("primary");
     let gameArena = document.getElementsByClassName("playingField")[0];
-    
-    
-    
-    for(let i = 0; i < bullets.length; i++){
+
+
+
+    for (let i = 0; i < bullets.length; i++) {
         let bullet = bullets[i];
         let bulletBox = bullet.getBoundingClientRect();
         // check if bullets hit large boss
 
-        if(bullet != undefined && boss.spawned == true){
-           
-            
+        if (bullet != undefined && boss.spawned == true) {
+
+
             let enemyBoss = document.getElementsByClassName("boss")[0];
             var enemyBossBox;
-            if(enemyBoss != undefined){
+            if (enemyBoss != undefined) {
                 enemyBossBox = enemyBoss.getBoundingClientRect();
-                if(bulletBox.top < enemyBossBox.top+enemyBossBox.height && bulletBox.left  > enemyBossBox.left && bulletBox.right < enemyBossBox.right){
+                if (bulletBox.top < enemyBossBox.top + enemyBossBox.height && bulletBox.left > enemyBossBox.left && bulletBox.right < enemyBossBox.right) {
                     //console.log("enemy boss hit");
                     bullet.remove();
                     primaryHit(bulletBox);
                     boss.health--;
-    
-                    
+
+
                 }
-                if(boss.health <= 0){
+                if (boss.health <= 0) {
 
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("largeScore");
-                    enemyScore.textContent = "+" + 1000*playerShip.scoreMultiplier;
+                    enemyScore.textContent = "+" + 1000 * playerShip.scoreMultiplier;
                     enemyScore.style.top = enemyBossBox.top + "px";
                     enemyScore.style.left = enemyBossBox.left + "px";
                     gameArena.appendChild(enemyScore);
-                    setTimeout(function(){
+                    setTimeout(function () {
                         enemyScore.remove();
-                    },2000);
+                    }, 2000);
 
                     enemyBoss.remove();
                     let bossDeath = document.createElement("div");
@@ -121,68 +137,71 @@ function checkEnemyHit(){
                     bossDeath.style.top = enemyBossBox.top + "px";
                     bossDeath.style.left = enemyBossBox.left + "px";
                     gameArena.appendChild(bossDeath);
-                    setTimeout(function(){
-                        
-                    },1000);
+                    setTimeout(function () {
+
+                    }, 1000);
                     $(".bossDeath").animate({
                         opacity: 0.01,
-                    }, {duration: 2000, queue:false, complete:function() {
-                        bossDeath.remove()
-                    }});
-                    playerShip.scoreMultiplier+= totalRounds*totalRounds;
-                    playerShip.score += 1000*playerShip.scoreMultiplier;
-                    playerShip.health += 5;
+                    }, {
+                        duration: 2000, queue: false, complete: function () {
+                            bossDeath.remove()
+                        }
+                    });
+                    playerShip.scoreMultiplier += totalRounds * totalRounds;
+                    playerShip.score += 1000 * playerShip.scoreMultiplier;
+                    addHealth(5);
                     boss.spawned = false;
                     currentBossHP += 20;
                     boss.health = currentBossHP;
                     roundCounter = 0;
                 }
             }
-             
-        
-            
-           
+
+
+
+
         }
-       
+
         // check if bullets hit small enemies
-        for(let j = 0; j < enemies.length; j++){
+        for (let j = 0; j < enemies.length; j++) {
             let enemyShip = enemies[j].reference;
-            if(bullet != undefined && enemyShip != "empty"){
+            if (bullet != undefined && enemyShip != "empty") {
                 let bulletBox = bullet.getBoundingClientRect();
                 let enemyShipBox = enemyShip.getBoundingClientRect();
 
                 //if primary weapon hit
-                if(bulletBox.top < enemyShipBox.top + enemyShipBox.height && bulletBox.top + bulletBox.height > enemyShipBox.top && bulletBox.left  > enemyShipBox.left && bulletBox.right < enemyShipBox.right){
-                //console.log("enemy ship hit");
-                 enemies[j].health-= playerShip.primaryDamage;
-                 bullet.remove();
-                 primaryHit(bulletBox);
-                 
-                 }
-             }
-             
-             if(enemies[j].health <= 0){
+                if (bulletBox.top < enemyShipBox.top + enemyShipBox.height && bulletBox.top + bulletBox.height > enemyShipBox.top && bulletBox.left > enemyShipBox.left && bulletBox.right < enemyShipBox.right) {
+                    //console.log("enemy ship hit");
+                    enemies[j].health -= playerShip.primaryDamage;
+                    bullet.remove();
+                    primaryHit(bulletBox);
 
-                if(enemyShip != "empty"){
+                }
+            }
+
+            if (enemies[j].health <= 0) {
+
+                if (enemyShip != "empty") {
                     let enemyShipBox = enemyShip.getBoundingClientRect();
-                    playerShip.health+=0.2;
+                    addHealth(0.2);
+
                     console.log(playerShip.health);
-                    
+
                     playerShip.scoreMultiplier += 1;
-                    playerShip.score += 100*playerShip.scoreMultiplier;
+                    playerShip.score += 100 * playerShip.scoreMultiplier;
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("smallScore");
-                    enemyScore.textContent = "+" + 100*playerShip.scoreMultiplier;
-                    
-                    
+                    enemyScore.textContent = "+" + 100 * playerShip.scoreMultiplier;
+
+
                     enemyScore.style.top = enemyShipBox.top + "px";
                     enemyScore.style.left = enemyShipBox.left + "px";
-                   
+
                     gameArena.appendChild(enemyScore);
-                    setTimeout(function(){
+                    setTimeout(function () {
                         enemyScore.remove();
-                    },1000);
-                
+                    }, 1000);
+
 
                     let enemyDeath = document.createElement("div");
                     enemyDeath.classList.add("enemyDeath");
@@ -191,63 +210,65 @@ function checkEnemyHit(){
                     gameArena.appendChild(enemyDeath);
                     $(".enemyDeath").animate({
                         opacity: 0.01,
-                    }, {duration: 1500, queue:false, complete:function() {
-                        enemyDeath.remove()
-                    }});
+                    }, {
+                        duration: 1500, queue: false, complete: function () {
+                            enemyDeath.remove()
+                        }
+                    });
 
 
                     enemyShip.remove();
                     enemiesLeft--;
                     console.log("enemies left: " + enemiesLeft);
-                    
+
                 }
-                 enemies[j].reference = "empty";
-                 
-             }
+                enemies[j].reference = "empty";
+
+            }
         }
-        
+
     }
-    
+
 }
-function checkPlayerHit(){
-    
+function checkPlayerHit() {
+
     let playerBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
     let enemyProjectiles = document.getElementsByClassName("enemyProjectile");
 
-    for(let i = 0; i < enemyProjectiles.length; i++){
+    for (let i = 0; i < enemyProjectiles.length; i++) {
         let projectileBox = enemyProjectiles[i].getBoundingClientRect();
 
-        if(projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width/3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width/3 ){
+        if (projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width / 3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width / 3) {
             console.log("you have been hit");
             primaryHit(projectileBox);
             enemyProjectiles[i].remove();
             playerShip.health--;
-            playerShip.scoreMultiplier = playerShip.scoreMultiplier/4;
+            playerShip.scoreMultiplier = playerShip.scoreMultiplier / 4;
             console.log(playerShip.health);
-            
-            
+
+
         }
     }
-    if(playerShip.health <= 0){
+    if (playerShip.health <= 0) {
         endGame();
-     
+
     }
 
 }
-function endGame(){
+function endGame() {
     let playerShip = document.getElementsByClassName("playerShip")[0];
-    let enemyShips =  $(".enemyShip");
+    let enemyShips = $(".enemyShip");
     let boss = document.getElementsByClassName("boss")[0];
 
-    for(let i = 0; i < enemyShips.length; i++){
-        if(enemyShips[i] != undefined){
+    for (let i = 0; i < enemyShips.length; i++) {
+        if (enemyShips[i] != undefined) {
             enemyShips[i].remove();
         }
     }
-    if(playerShip != undefined ){
+    if (playerShip != undefined) {
         playerShip.remove();
     }
-    if(boss != undefined){
+    if (boss != undefined) {
         boss.remove();
     }
     clearInterval(sensor1);
@@ -255,282 +276,286 @@ function endGame(){
     clearInterval(sensor3);
     toggleGUI();
     toggleDeathScreen();
-    
+
     gameOn = false;
     resetStats();
 }
 
-function resetStats(){
+function resetStats() {
     // global variables
-enemyID = 0;
-enemies = [];
-totalRounds = 0;
-enemiesLeft = 2;
-roundCounter = 0;
-currentBossHP = 20;
-currentEnemySmallDamage = 1;
-chanceToFire = 10;
-bulletIndex = 0;
-bossBulletIndex = 0;
-primaryIndex = 0;
+    enemyID = 0;
+    enemies = [];
+    totalRounds = 0;
+    enemiesLeft = 2;
+    roundCounter = 0;
+    currentBossHP = 20;
+    currentEnemySmallDamage = 1;
+    chanceToFire = 10;
+    bulletIndex = 0;
+    bossBulletIndex = 0;
+    primaryIndex = 0;
 
-// Objects
-playerShip = {
-    health: 10,
-    experience: 0,
-    powerups: {
+    // Objects
+    playerShip = {
+        health: 10,
+        experience: 0,
+        powerups: {
 
-    },
-    primary: true,
-    secondary: true,
-    tertiary: true,
-    ultimate: true,
-    primaryDamage: 1,
-    secondaryDamage:4,
-    tertiaryDamage:16,
-    ultimateDamage:10,
-    score: 0,
-    scoreMultiplier: 0
+        },
+        primary: true,
+        secondary: true,
+        tertiary: true,
+        ultimate: true,
+        primaryDamage: 1,
+        secondaryDamage: 4,
+        tertiaryDamage: 16,
+        ultimateDamage: 10,
+        score: 0,
+        scoreMultiplier: 0
 
 
+    }
+
+    boss = {
+        health: 20,
+        spawned: false,
+    }
 }
-
-boss = {
-    health: 20,
-    spawned: false,
-}
-}
-function startGame(){
+function startGame() {
     gameOn = true;
     displayPlayer();
     toggleGUI();
-    
+
     let numberOfEnemies = 1;
     displayEnemy(numberOfEnemies);
 
-    
-    sensor1 = setInterval(function(){
-    if(gameOn == true){
-        deleteEmpty();
-        checkEnemyHit();
-        checkPlayerHit();
-        updateGUI();
 
-     
-    }
-
-    
-        
-        
-    },45);
+    sensor1 = setInterval(function () {
+        if (gameOn == true) {
+            deleteEmpty();
+            checkEnemyHit();
+            checkPlayerHit();
+            updateGUI();
 
 
-    sensor2 = setInterval(function(){
-        if(gameOn == true){
+        }
+
+
+
+
+    }, 45);
+
+
+    sensor2 = setInterval(function () {
+        if (gameOn == true) {
             enemyShots();
         }
-        
-        
-       
-    },2000);
 
-    sensor3 = setInterval(function(){
-        if(enemiesLeft == 0){
-    
-            
-            
-            
-           
-            if(roundCounter == 2){
+
+
+    }, 2000);
+
+    sensor3 = setInterval(function () {
+        if (enemiesLeft == 0) {
+
+
+
+
+
+            if (roundCounter == 2) {
                 totalRounds++;
                 enemiesLeft = numberOfEnemies;
                 currentEnemySmallDamage++;
                 console.log(roundCounter);
-                
+
                 roundCounter++;
-                
+
                 displayBoss();
                 displayEnemy(numberOfEnemies);
                 boss.spawned = true;
                 console.log(boss.health);
-                
-                
+                if (numberOfEnemies >= 20) {
+
+                    playerShip.primaryDamage += 2
+
+                }
+
+
             }
-            else{
-                if(boss.spawned == false && roundCounter < 2){
+            else {
+                if (boss.spawned == false && roundCounter < 2) {
                     totalRounds++;
                     roundCounter++;
-                    
-                    if(numberOfEnemies < 20){
+
+                    if (numberOfEnemies < 20) {
                         numberOfEnemies += 1;
-                        enemyHealth+= 0.25;
-                        playerShip.primaryDamage+=0.1;
+                        enemyHealth += 0.25;
+
                     }
-                    else{
-                        enemyHealth += 3*totalRounds;
-                        playerShip.primaryDamage += 1.2*totalRounds;
+                    else {
+                        enemyHealth += 1;
                     }
-                    
+
                     enemiesLeft = numberOfEnemies;
                     displayEnemy(numberOfEnemies);
                 }
-                
-            
-                
+
+
+
             }
-            
+
         }
-    },1000);
+    }, 1000);
 }
-function updateGUI(){
+function updateGUI() {
     // update each of the stats in the gui with new data
     $(".healthBar p").text(playerShip.health);
     $(".round").text("Round: " + totalRounds);
     $(".score").text("Score: " + playerShip.score);
     $(".scoreMultiplier").text(playerShip.scoreMultiplier);
 }
-function enemyShots(){
+function enemyShots() {
 
-   
-    
+
+
     var gameArena = document.getElementsByClassName("playingField")[0];
     //get all enemy planes
     let enemyPlanes = document.getElementsByClassName("enemyShip");
-   
+
     // console.log(enemyPlanes);
-    for(let i = 0; i < enemyPlanes.length; i++){
-        if(Math.random()*10 <= chanceToFire){
+    for (let i = 0; i < enemyPlanes.length; i++) {
+        if (Math.random() * 10 <= chanceToFire) {
             let enemyPlane = enemyPlanes[i];
             // console.log(enemyPlane);
-            
+
             let enemyPlaneBox = enemyPlane.getBoundingClientRect();
 
             let enemyBullet = document.createElement("div");
             enemyBullet.classList.add("enemyBullet");
             enemyBullet.classList.add("enemyProjectile");
-            enemyBullet.classList.add("enemybullet"+ bulletIndex);
-            
-            
-          
+            enemyBullet.classList.add("enemybullet" + bulletIndex);
+
+
+
             enemyBullet.style.top = (enemyPlaneBox.top + 50) + "px";
-            enemyBullet.style.left = (enemyPlaneBox.left + 75/2) + "px";
+            enemyBullet.style.left = (enemyPlaneBox.left + 75 / 2) + "px";
             // console.log(enemyBullet);
             // console.log(enemyPlane);
-            
-            
-        
+
+
+
             gameArena.appendChild(enemyBullet);
-            $(".enemybullet"+bulletIndex).animate({top:( enemyPlaneBox.top + window.innerHeight)+ "px"},{duration:6000, queue: false});
-            setTimeout(function(){
+            $(".enemybullet" + bulletIndex).animate({ top: (enemyPlaneBox.top + window.innerHeight) + "px" }, { duration: 6000, queue: false });
+            setTimeout(function () {
                 // console.log( $(".enemybullet"+bulletIndex));
-                
-            enemyBullet.remove();
-            },6000);
+
+                enemyBullet.remove();
+            }, 6000);
             bulletIndex++;
-            
-            
-           
+
+
+
         }
     }
 
 
-    if(document.getElementsByClassName("boss")[0] != undefined){
-       
-        
+    if (document.getElementsByClassName("boss")[0] != undefined) {
+
+
         let bossBox = document.getElementsByClassName("boss")[0].getBoundingClientRect();
         let bossBulletPosition = 0;
         let playerBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
-        for(let i = 0; i < 6; i++){
+        for (let i = 0; i < 6; i++) {
             let bossBullet = document.createElement("div");
             // console.log(bossBullet);
-            
+
             bossBullet.classList.add("bossBullet");
             bossBullet.classList.add("enemyProjectile");
             bossBullet.classList.add("bossbullet" + bossBulletIndex);
-            
+
             bossBullet.style.top = (bossBox.top + 100) + "px"
             bossBullet.style.left = (bossBox.left + bossBulletPosition) + "px";
-            bossBulletPosition += 300/6;
+            bossBulletPosition += 300 / 6;
             gameArena.appendChild(bossBullet);
 
-         
-            $(".bossbullet"+bossBulletIndex).animate({top:(playerBox.top + 20) + "px"},{duration:6000, queue: false});
-            $(".bossbullet"+bossBulletIndex).animate({left:(playerBox.left + 75/2) + "px"},{duration:6000, queue: false});
+
+            $(".bossbullet" + bossBulletIndex).animate({ top: (playerBox.top + 20) + "px" }, { duration: 6000, queue: false });
+            $(".bossbullet" + bossBulletIndex).animate({ left: (playerBox.left + 75 / 2) + "px" }, { duration: 6000, queue: false });
             bossBulletIndex++;
-            setTimeout(function(){
+            setTimeout(function () {
                 bossBullet.remove();
-            },6000);
+            }, 6000);
         }
     }
 
-    
 
-    
-    
 
-    
+
+
+
+
     //generate a random number between 1 and 10, each plane starts off with 100% chance of firing, the more planes, the lower the chance of firing
-    
+
     //if within the range fire shots
-        //for each plane that can fire a shot, generate a small projectile using a div container
+    //for each plane that can fire a shot, generate a small projectile using a div container
 
 }
 
 
-function makeEnemies(numberOfEnemies){
-    for(let i = 0; i < numberOfEnemies; i++){
+function makeEnemies(numberOfEnemies) {
+    for (let i = 0; i < numberOfEnemies; i++) {
         enemies.push(new Enemy());
     }
 }
-function deleteEmpty(){
-    for(let i = 0; i < enemies.length; i++){
-        if(enemies[i].reference == "empty"){
-            enemies.splice(i,1);
+function deleteEmpty() {
+    for (let i = 0; i < enemies.length; i++) {
+        if (enemies[i].reference == "empty") {
+            enemies.splice(i, 1);
         }
     }
 }
-function displayBoss(){
+function displayBoss() {
     let enemyBoss = document.createElement("img");
     enemyBoss.src = "images/boss.png";
     enemyBoss.classList.add("boss");
 
     let gameArena = document.getElementsByClassName("playingField")[0];
-        gameArena.appendChild(enemyBoss);
+    gameArena.appendChild(enemyBoss);
 }
 
-function displayEnemy(numberOfEnemies){
+function displayEnemy(numberOfEnemies) {
 
 
-    
 
-    for(let i = 0; i < numberOfEnemies; i++){
 
-        
+    for (let i = 0; i < numberOfEnemies; i++) {
+
+
 
         let enemyShip = document.createElement("img");
-        switch(totalRounds){
-            case totalRounds<3:
+        switch (totalRounds) {
+            case totalRounds < 3:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<6:
+            case totalRounds < 6:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<9:
+            case totalRounds < 9:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<12:
+            case totalRounds < 12:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<15:
+            case totalRounds < 15:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<18:
+            case totalRounds < 18:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<21:
+            case totalRounds < 21:
                 enemyShip.src = "images/enemyShip.png";
                 break;
-            case totalRounds<24:
+            case totalRounds < 24:
                 enemyShip.src = "images/enemyShip.png";
                 break;
 
@@ -540,60 +565,60 @@ function displayEnemy(numberOfEnemies){
         enemyShip.classList.add("enemyShip");
         enemyShip.classList.add(enemyID);
         enemyID++;
-        
-        enemyShip.style.left = (Math.random()*(window.innerWidth - 400)+200) + "px"; 
-        enemyShip.style.top = (Math.random()*(100)+50) + "px"; 
-       //console.log(enemyShip.style.left);
-        
-        
-        
+
+        enemyShip.style.left = (Math.random() * (window.innerWidth - 400) + 200) + "px";
+        enemyShip.style.top = (Math.random() * (100) + 50) + "px";
+        //console.log(enemyShip.style.left);
+
+
+
         let gameArena = document.getElementsByClassName("playingField")[0];
         gameArena.appendChild(enemyShip);
 
     }
-  
+
     makeEnemies(numberOfEnemies);
-    
+
 }
-function Enemy(){
+function Enemy() {
     this.health = enemyHealth;
     this.damage = currentEnemySmallDamage;
 
     // get all displayed enemy ships
     let allEnemies = $(".enemyShip");
-   //console.log(allEnemies);
-    
+    //console.log(allEnemies);
+
     // check through each enemy in enemies array if they have the reference
-  
+
     let possibleEnemies = allEnemies;
-    for(let i = 0; i < enemies.length; i++){
-        for(let j = 0; j < allEnemies.length; j++){
+    for (let i = 0; i < enemies.length; i++) {
+        for (let j = 0; j < allEnemies.length; j++) {
 
-            if(enemies[i].reference == allEnemies[j]){
+            if (enemies[i].reference == allEnemies[j]) {
 
-                possibleEnemies.splice(j, 1,"empty");
-                
+                possibleEnemies.splice(j, 1, "empty");
+
             }
 
         }
     }
     //console.log(possibleEnemies);
-    
+
     // if they don't have the reference, add reference to this enemy
-    for(let i = 0; i < possibleEnemies.length; i++){
-        if(possibleEnemies[i] != "empty"){
+    for (let i = 0; i < possibleEnemies.length; i++) {
+        if (possibleEnemies[i] != "empty") {
             this.reference = possibleEnemies[i];
             //console.log("testing ");
-            
+
         }
     }
     //console.log("Enemies: ");
-    
+
     //console.log(enemies);
-    
-    
+
+
 }
-function displayPlayer(){
+function displayPlayer() {
 
     let gameArena = document.getElementsByClassName("playingField")[0];
     let playerShip = document.createElement("img");
@@ -602,183 +627,249 @@ function displayPlayer(){
     gameArena.appendChild(playerShip);
 
 }
-// ship weapons
-function firePrimary(){
-    if(playerShip.primary == true){
-        
-        //console.log("firing primary");
-        var primary = document.createElement("div"); 
+function addHealth(health) {
+    if (playerShip.health < maximumHP) {
+        playerShip.health += health
+    }
+    if (playerShip.health > maximumHP) {
+        playerShip.health -= (playerShip.health - maximumHP);
+    }
 
-        primary.classList.add("primary");     
-        primary.classList.add("primary" + primaryIndex);       
+}
+// ship weapons
+function firePrimary() {
+
+    if(primaryOn == false){
+        primaryOn = true;
         
+        primaryRepeat = setInterval(function(){
+       //console.log("firing primary");
+        var primary = document.createElement("div");
+
+        primary.classList.add("primary");
+        primary.classList.add("primary" + primaryIndex);
+
         let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
 
         primary.style.position = "absolute";
-        
-        primary.style.top = (ship.top ) + "px";
-        primary.style.left = (ship.left + 75/2) + "px";
+
+        primary.style.top = (ship.top) + "px";
+        primary.style.left = (ship.left + 75 / 2) + "px";
 
         var gameArena = document.getElementsByClassName("playingField")[0];
-                          
+
         gameArena.appendChild(primary);
 
-        $(".primary" + primaryIndex).animate({top: "0px"},{ duration: 500, queue: false });
+        $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false });
         primaryIndex++;
 
-        setTimeout(function(){   primary.remove();   }, 500);
-        
-        
-        //fire primary
-        playerShip.primary = false;
-        
-        setTimeout(function(){   playerShip.primary = true; }, 100);
+        setTimeout(function () { primary.remove(); }, 500);
+
+        },100);
     }
+        
+ 
+
+        //fire primary
+        
+
+        
+    
 }
-function fireSecondary(){
-    if(playerShip.secondary == true){
+function stopPrimary(){
+    clearInterval(primaryRepeat);
+    primaryOn = false;
+}
+function fireSecondary() {
+    if (playerShip.secondary == true) {
         //console.log("firing secondary");
         //fire secondary
         playerShip.secondary = false;
 
-        setTimeout(function(){   playerShip.secondary = true; }, 10000);
+        setTimeout(function () { playerShip.secondary = true; }, 10000);
     }
 }
-function fireTertiary(){
-    if(playerShip.tertiary == true){
+function fireTertiary() {
+    if (playerShip.tertiary == true) {
         //console.log("firing tertiary");
         //fire tertiary
         playerShip.tertiary = false;
 
-        setTimeout(function(){   playerShip.tertiary = true; }, 25000);
+        setTimeout(function () { playerShip.tertiary = true; }, 25000);
     }
 }
-function fireUltimate(){
-    if(playerShip.ultimate == true){
+function fireUltimate() {
+    if (playerShip.ultimate == true) {
         //console.log("firing ultimate");
         //fire ultimate
         playerShip.ultimate = false;
 
-        setTimeout(function(){   playerShip.ultimate = true; }, 60000);
+        setTimeout(function () { playerShip.ultimate = true; }, 60000);
     }
 }
-function moveShip(keyPressed){
-
-   
-    if(gameOn == true){
-//check if ship is about to go out of window
-let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
-let stopLeft = false;
-let stopRight = false;
-let stopUp = false;
-let stopDown = false;
-// console.log("top: " + ship.top);
-// console.log("bottom: " + ship.botom);
-// console.log("right: " + ship.right);
-// console.log("left: " + ship.left);
-
-if(ship.top <= 100){
-    stopUp = true;
-}
-if(ship.top >= window.innerHeight - 150){
-    stopDown = true;
-}
-if( ship.right >= window.innerWidth - 100){
-    stopRight = true;
-}
-if(ship.left <= 100){
-    stopLeft = true;
-}
+function moveShip(keyPressed) {
 
 
+    if (gameOn == true) {
+        //check if ship is about to go out of window
+        let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
+        let stopLeft = false;
+        let stopRight = false;
+        let stopUp = false;
+        let stopDown = false;
+        // console.log("top: " + ship.top);
+        // console.log("bottom: " + ship.botom);
+        // console.log("right: " + ship.right);
+        // console.log("left: " + ship.left);
 
-
-switch (keyPressed) {
-    case 37:
-        // alert('Left key pressed');
-        if(stopLeft == false){
-            $(".playerShip").animate({left:'-=55px'},{ duration: 100, queue: false });
+        if (ship.top <= 100) {
+            stopUp = true;
         }
-        
-        break;
-    case 38:
-        if(stopUp == false){
-            $(".playerShip").animate({top:'-=55px'},{ duration: 100, queue: false });
+        if (ship.top >= window.innerHeight - 150) {
+            stopDown = true;
         }
-        // alert('Up key pressed');
-        
-        break;
-    case 39:
+        if (ship.right >= window.innerWidth - 100) {
+            stopRight = true;
+        }
+        if (ship.left <= 100) {
+            stopLeft = true;
+        }
 
-        if(stopRight == false){
-            $(".playerShip").animate({left:'+=55px'},{ duration: 100, queue: false });
+
+
+
+        switch (keyPressed) {
+            case 37:
+                // alert('Left key pressed');
+                if (stopLeft == false && leftCount < 1) {
+                    
+                    
+
+                    leftCount++;
+                    moveLeft = setInterval(function () {
+                        $(".playerShip").animate({ left: '-=' + moveVel + 'px' }, { duration: 10, queue: false },);
+                    },10)
+
+                }
+
+                break;
+            case 38:
+                if (stopUp == false && upCount < 1) {
+                    upCount++;
+                    moveUp = setInterval(function () {
+                        $(".playerShip").animate({ top: '-=' + moveVel + 'px' }, { duration: 10, queue: false });
+                    },10)
+                }
+                // alert('Up key pressed');
+
+                break;
+            case 39:
+
+                if (stopRight == false && rightCount < 1) {
+                    rightCount++;
+                    moveRight = setInterval(function () {
+                        $(".playerShip").animate({ left: '+=' + moveVel + 'px' }, { duration: 10, queue: false });
+                    }, 10)
+                }
+                //alert('Right key pressed');
+
+
+                break;
+            case 40:
+                if (stopDown == false && downCount < 1) {
+                    downCount++;
+                    moveDown = setInterval(function () {
+                        $(".playerShip").animate({ top: '+=' + moveVel + 'px' }, { duration: 10, queue: false });
+                    }, 10)
+                }
+                //alert('Down key pressed');
+
+                break;
         }
-        //alert('Right key pressed');
-        
-            
-        break;
-    case 40:
-        if(stopDown == false){
-            $(".playerShip").animate({top: '+=55px'},{ duration: 100, queue: false });
-        }
-            //alert('Down key pressed');
-        
-        break;
-}
 
     }
-    
-   
+
+
 
 
 }
-function toggleGUI(){
+function stopShip(keyPressed){
+    if(keyPressed == 37){
+        clearInterval(moveLeft);
+        leftCount = 0;
+    }
+    else if(keyPressed == 38){
+        clearInterval(moveUp);
+        upCount = 0;
+    }
+    else if(keyPressed == 39){
+        clearInterval(moveRight);
+        rightCount = 0;
+    }
+    else if(keyPressed == 40){
+        clearInterval(moveDown);
+        downCount = 0;
+    }
+}
+function toggleGUI() {
     $(".playerGUI").toggle(500);
 }
-function toggleDeathScreen(){
+function toggleDeathScreen() {
     $(".scoreDeath").text("Score: " + playerShip.score);
     $(".roundDeath").text("Rounds Beaten: " + totalRounds);
     $(".deathScreen").toggle(500);
 
 }
-$(document).keydown(function(event){
+$(document).keydown(function (event) {
 
-    
-    if(gameOn == true){
+
+    if (gameOn == true) {
         let keypressed = event.keyCode
-        if(keypressed == 81){
+        if (keypressed == 81) {
             firePrimary();
         }
-        if(keypressed == 37 || keypressed == 38 || keypressed == 39 || keypressed == 40){
+        if (keypressed == 37 || keypressed == 38 || keypressed == 39 || keypressed == 40) {
             moveShip(event.keyCode);
         }
-        if(keypressed == 87){
+        if (keypressed == 87) {
             fireSecondary();
         }
-        if(keypressed == 69){
+        if (keypressed == 69) {
             fireTertiary();
         }
-        if(keypressed == 82){
+        if (keypressed == 82) {
             fireUltimate();
         }
-        
-    }
-    
-    
-   
-});
 
-$(".startButton").click(function(){
-    
+    }
+
+
+
+});
+$(document).keyup(function (event) {
+    keypressed = event.keyCode;
+    if (gameOn == true) {
+        if (keypressed == 37 || keypressed == 38 || keypressed == 39 || keypressed == 40) {
+            stopShip(event.keyCode);
+        }
+        if(keypressed == 81){
+            stopPrimary();
+        }
+    }
+
+})
+
+$(".startButton").click(function () {
+
     $(".mainMenu").slideToggle(1000);
-    setTimeout(function(){ startGame();},1000);
+    setTimeout(function () { startGame(); }, 1000);
 })
-$(".restartButton").click(function(){
-    
+$(".restartButton").click(function () {
+
     toggleDeathScreen();
-    setTimeout(function(){ startGame();},1000);
+    setTimeout(function () { startGame(); }, 1000);
 })
-$(".returnMenu").click(function(){
+$(".returnMenu").click(function () {
     toggleDeathScreen();
     $(".mainMenu").slideToggle(1000);
 
