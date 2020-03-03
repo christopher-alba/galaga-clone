@@ -501,8 +501,8 @@ function enemyShots() {
     },100);
 
     var shotMultiplier;
-    if(totalRounds >= 70){
-        shotMultiplier = 7;
+    if(totalRounds >= 40){
+        shotMultiplier = 4;
     }
     else{
         shotMultiplier = totalRounds/10 + 1
