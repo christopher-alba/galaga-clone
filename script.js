@@ -123,7 +123,7 @@ function checkEnemyHit() {
 
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("largeScore");
-                    playerShip.scoreMultiplier += totalRounds * totalRounds;
+                    playerShip.scoreMultiplier += totalRounds * totalRounds;git 
                     enemyScore.textContent = "+" + Math.floor(1000 * playerShip.scoreMultiplier);
                     enemyScore.style.top = enemyBossBox.top + "px";
                     enemyScore.style.left = enemyBossBox.left + "px";
