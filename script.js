@@ -123,7 +123,7 @@ function checkEnemyHit() {
 
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("largeScore");
-                    enemyScore.textContent = "+" + 1000 * playerShip.scoreMultiplier;
+                    enemyScore.textContent = "+" + Math.floor(1000 * playerShip.scoreMultiplier);
                     enemyScore.style.top = enemyBossBox.top + "px";
                     enemyScore.style.left = enemyBossBox.left + "px";
                     gameArena.appendChild(enemyScore);
@@ -191,7 +191,7 @@ function checkEnemyHit() {
                     playerShip.score += 100 * playerShip.scoreMultiplier;
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("smallScore");
-                    enemyScore.textContent = "+" + 100 * playerShip.scoreMultiplier;
+                    enemyScore.textContent = "+" + Math.floor(100 * playerShip.scoreMultiplier);
 
 
                     enemyScore.style.top = enemyShipBox.top + "px";
@@ -423,8 +423,8 @@ function updateGUI() {
     // update each of the stats in the gui with new data
     $(".healthBar p").text(playerShip.health);
     $(".round").text("Round: " + totalRounds);
-    $(".score").text("Score: " + playerShip.score);
-    $(".scoreMultiplier").text(playerShip.scoreMultiplier);
+    $(".score").text("Score: " + Math.floor(playerShip.score));
+    $(".scoreMultiplier").text(Math.floor(playerShip.scoreMultiplier));
 }
 function enemyShots() {
 
