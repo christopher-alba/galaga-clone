@@ -123,6 +123,7 @@ function checkEnemyHit() {
 
                     let enemyScore = document.createElement("div");
                     enemyScore.classList.add("largeScore");
+                    playerShip.scoreMultiplier += totalRounds * totalRounds;
                     enemyScore.textContent = "+" + Math.floor(1000 * playerShip.scoreMultiplier);
                     enemyScore.style.top = enemyBossBox.top + "px";
                     enemyScore.style.left = enemyBossBox.left + "px";
@@ -147,7 +148,7 @@ function checkEnemyHit() {
                             bossDeath.remove()
                         }
                     });
-                    playerShip.scoreMultiplier += totalRounds * totalRounds;
+                   
                     playerShip.score += 1000 * playerShip.scoreMultiplier;
                     addHealth(5);
                     boss.spawned = false;
