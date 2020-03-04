@@ -10,9 +10,16 @@ let currentEnemySmallDamage = 1;
 let chanceToFire = 10;
 let bulletIndex = 0;
 let bossBulletIndex = 0;
+
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
 let primaryOn = false;
+
+let secondaryIndex = 0;
+let secondaryExplodeIndex = 0;
+let secondaryRockets = 6;
+let secondaryHitIndex = 0;
+
 var primaryRepeat;
 let gameOn = true;
 let enemyHealth = 1;
@@ -93,12 +100,124 @@ function primaryHit(bulletBox) {
 
 
 }
-function checkEnemyHit() {
-    let bullets = document.getElementsByClassName("primary");
+function secondaryHit(shipBox){
     let gameArena = document.getElementsByClassName("playingField")[0];
+    let secondaryHit = document.createElement("div");
+
+    secondaryHit.classList.add("secondaryHit");
+    secondaryHit.classList.add("secondaryhit" + secondaryHitIndex);
+
+    secondaryHit.style.top = Math.random()*(shipBox.height) + shipBox.top + "px";
+    secondaryHit.style.left = Math.random()*(shipBox.width) + shipBox.left + "px";
+
+    gameArena.appendChild(secondaryHit);
+    $(".secondaryHit" + secondaryHitIndex).animate({
+        opacity: 0.01,
+    }, {
+        duration: 1000, queue: false, complete: function () {
+           secondaryHit.remove();
+           
+        }
+    });
+    setTimeout(function(){
+        secondaryHit.remove();
+    },1000);
+    secondaryHitIndex++;
+    
+}
+function bossDeath(enemyBossBox,enemyBoss){
+    let gameArena = document.getElementsByClassName("playingField")[0];
+    let enemyScore = document.createElement("div");
+    enemyScore.classList.add("largeScore");
+    playerShip.scoreMultiplier += totalRounds * totalRounds;
+    enemyScore.textContent = "+" + Math.floor(1000 * playerShip.scoreMultiplier);
+    enemyScore.style.top = enemyBossBox.top + "px";
+    enemyScore.style.left = enemyBossBox.left + "px";
+    gameArena.appendChild(enemyScore);
+    setTimeout(function () {
+        enemyScore.remove();
+    }, 2000);
+
+    enemyBoss.remove();
+    let bossDeath = document.createElement("div");
+    bossDeath.classList.add("bossDeath");
+    bossDeath.style.top = enemyBossBox.top + "px";
+    bossDeath.style.left = enemyBossBox.left + "px";
+    gameArena.appendChild(bossDeath);
+    setTimeout(function () {
+
+    }, 1000);
+    $(".bossDeath").animate({
+        opacity: 0.01,
+    }, {
+        duration: 2000, queue: false, complete: function () {
+            bossDeath.remove()
+        }
+    });
+   
+    playerShip.score += 1000 * playerShip.scoreMultiplier;
+    addHealth(5);
+    boss.spawned = false;
+    currentBossHP += 20;
+    boss.health = currentBossHP;
+    roundCounter = 0;
+}
+function smallEnemyDeath(enemyShip){
+    if(enemyShip != "empty"){
+        let gameArena = document.getElementsByClassName("playingField")[0];
+        let enemyShipBox = enemyShip.getBoundingClientRect();
+        if (enemyShip != "empty") {
+            
+            addHealth(0.2);
+    
+            console.log(playerShip.health);
+    
+            playerShip.scoreMultiplier += 1;
+            playerShip.score += 100 * playerShip.scoreMultiplier;
+            let enemyScore = document.createElement("div");
+            enemyScore.classList.add("smallScore");
+            enemyScore.textContent = "+" + Math.floor(100 * playerShip.scoreMultiplier);
+    
+    
+            enemyScore.style.top = enemyShipBox.top + "px";
+            enemyScore.style.left = enemyShipBox.left + "px";
+    
+            gameArena.appendChild(enemyScore);
+            setTimeout(function () {
+                enemyScore.remove();
+            }, 1000);
+    
+    
+            let enemyDeath = document.createElement("div");
+            enemyDeath.classList.add("enemyDeath");
+            enemyDeath.style.top = enemyShipBox.top + "px";
+            enemyDeath.style.left = enemyShipBox.left + "px";
+            gameArena.appendChild(enemyDeath);
+            $(".enemyDeath").animate({
+                opacity: 0.01,
+            }, {
+                duration: 1500, queue: false, complete: function () {
+                    enemyDeath.remove()
+                }
+            });
+    
+    
+            enemyShip.remove();
+            enemiesLeft--;
+            console.log("enemies left: " + enemiesLeft);
+    
+        }
+    }
+    
+  
+
+}
+function checkEnemyHit() {
+    
 
 
-
+    // Check Primary Weapon Hits
+    let bullets = document.getElementsByClassName("primary");
     for (let i = 0; i < bullets.length; i++) {
         let bullet = bullets[i];
         let bulletBox = bullet.getBoundingClientRect();
@@ -121,40 +240,7 @@ function checkEnemyHit() {
                 }
                 if (boss.health <= 0) {
 
-                    let enemyScore = document.createElement("div");
-                    enemyScore.classList.add("largeScore");
-                    playerShip.scoreMultiplier += totalRounds * totalRounds;
-                    enemyScore.textContent = "+" + Math.floor(1000 * playerShip.scoreMultiplier);
-                    enemyScore.style.top = enemyBossBox.top + "px";
-                    enemyScore.style.left = enemyBossBox.left + "px";
-                    gameArena.appendChild(enemyScore);
-                    setTimeout(function () {
-                        enemyScore.remove();
-                    }, 2000);
-
-                    enemyBoss.remove();
-                    let bossDeath = document.createElement("div");
-                    bossDeath.classList.add("bossDeath");
-                    bossDeath.style.top = enemyBossBox.top + "px";
-                    bossDeath.style.left = enemyBossBox.left + "px";
-                    gameArena.appendChild(bossDeath);
-                    setTimeout(function () {
-
-                    }, 1000);
-                    $(".bossDeath").animate({
-                        opacity: 0.01,
-                    }, {
-                        duration: 2000, queue: false, complete: function () {
-                            bossDeath.remove()
-                        }
-                    });
-                   
-                    playerShip.score += 1000 * playerShip.scoreMultiplier;
-                    addHealth(5);
-                    boss.spawned = false;
-                    currentBossHP += 20;
-                    boss.health = currentBossHP;
-                    roundCounter = 0;
+                   bossDeath(enemyBossBox,enemyBoss);
                 }
             }
 
@@ -166,9 +252,11 @@ function checkEnemyHit() {
         // check if bullets hit small enemies
         for (let j = 0; j < enemies.length; j++) {
             let enemyShip = enemies[j].reference;
+            
             if (bullet != undefined && enemyShip != "empty") {
-                let bulletBox = bullet.getBoundingClientRect();
                 let enemyShipBox = enemyShip.getBoundingClientRect();
+                let bulletBox = bullet.getBoundingClientRect();
+                
 
                 //if primary weapon hit
                 if (bulletBox.top < enemyShipBox.top + enemyShipBox.height && bulletBox.top + bulletBox.height > enemyShipBox.top && bulletBox.left > enemyShipBox.left && bulletBox.right < enemyShipBox.right) {
@@ -181,53 +269,42 @@ function checkEnemyHit() {
             }
 
             if (enemies[j].health <= 0) {
-
-                if (enemyShip != "empty") {
-                    let enemyShipBox = enemyShip.getBoundingClientRect();
-                    addHealth(0.2);
-
-                    console.log(playerShip.health);
-
-                    playerShip.scoreMultiplier += 1;
-                    playerShip.score += 100 * playerShip.scoreMultiplier;
-                    let enemyScore = document.createElement("div");
-                    enemyScore.classList.add("smallScore");
-                    enemyScore.textContent = "+" + Math.floor(100 * playerShip.scoreMultiplier);
-
-
-                    enemyScore.style.top = enemyShipBox.top + "px";
-                    enemyScore.style.left = enemyShipBox.left + "px";
-
-                    gameArena.appendChild(enemyScore);
-                    setTimeout(function () {
-                        enemyScore.remove();
-                    }, 1000);
-
-
-                    let enemyDeath = document.createElement("div");
-                    enemyDeath.classList.add("enemyDeath");
-                    enemyDeath.style.top = enemyShipBox.top + "px";
-                    enemyDeath.style.left = enemyShipBox.left + "px";
-                    gameArena.appendChild(enemyDeath);
-                    $(".enemyDeath").animate({
-                        opacity: 0.01,
-                    }, {
-                        duration: 1500, queue: false, complete: function () {
-                            enemyDeath.remove()
-                        }
-                    });
-
-
-                    enemyShip.remove();
-                    enemiesLeft--;
-                    console.log("enemies left: " + enemiesLeft);
-
-                }
+                
+                smallEnemyDeath(enemyShip);
                 enemies[j].reference = "empty";
-
             }
         }
 
+    }
+    // check secondary weapon hits
+    let secondaryExplosions = document.getElementsByClassName("secondaryExplosion");
+    for(let i = 0; i < secondaryExplosions.length; i++){
+      
+        let secondaryExplodeBox = secondaryExplosions[i].getBoundingClientRect();
+        for(let j = 0; j < enemies.length; j++){
+            if(enemies[j].reference != "empty"){
+                let enemyShipBox = enemies[j].reference.getBoundingClientRect();
+
+                if (enemyShipBox.left >= secondaryExplodeBox.left + secondaryExplodeBox.width || enemyShipBox.top >= secondaryExplodeBox.top + secondaryExplodeBox.height || 
+                    enemyShipBox.left + enemyShipBox.width <= secondaryExplodeBox.left || enemyShipBox.top + enemyShipBox.height <= secondaryExplodeBox.top)
+                {
+                    // no overlap
+                }
+                else
+                {
+                    enemies[j].health -= playerShip.secondaryDamage;
+                    secondaryHit(enemyShipBox);
+                    if(enemies[j].health <= 0){
+                        smallEnemyDeath(enemies[j].reference);
+                        enemies[j].reference = "empty";
+                    }
+                    
+                    // overlap
+                }
+            }
+            
+           
+        }
     }
 
 }
@@ -296,6 +373,7 @@ function resetStats() {
     enemiesLeft = 1;
     roundCounter = 0;
     currentBossHP = 20;
+    enemyHealth = 1;
     currentEnemySmallDamage = 1;
     chanceToFire = 10;
     bulletIndex = 0;
@@ -304,7 +382,7 @@ function resetStats() {
 
     // Objects
     playerShip = {
-        health: 10,
+        health: 20,
         experience: 0,
         powerups: {
 
@@ -385,6 +463,7 @@ function startGame() {
                 if (numberOfEnemies >= 20) {
 
                     playerShip.primaryDamage += 10;
+                    playerShip.secondaryDamage += 5;
 
                 }
                 if(totalRounds >= 70){
@@ -500,13 +579,13 @@ function enemyShots() {
     
     },100);
 
-    var shotMultiplier;
-    if(totalRounds >= 40){
-        shotMultiplier = 4;
-    }
-    else{
-        shotMultiplier = totalRounds/10 + 1
-    }
+    var shotMultiplier = 1;
+    // if(totalRounds >= 40){
+    //     shotMultiplier = 4;
+    // }
+    // else{
+    //     shotMultiplier = totalRounds/10 + 1
+    // }
     setTimeout(function(){
         clearInterval(repeatShots);
     },100*(Math.floor(shotMultiplier)))
@@ -735,7 +814,7 @@ function Enemy() {
                     this.health = playerShip.primaryDamage*3 + healthScaling;
                 }
                 else{
-                    this.health = playerShip.primaryDamage;
+                    this.health += playerShip.primaryDamage*3;
                 }
             }
            
@@ -814,10 +893,152 @@ function fireSecondary() {
     if (playerShip.secondary == true) {
         //console.log("firing secondary");
         //fire secondary
-        playerShip.secondary = false;
+        let playerShipBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();   
+        let gameArena = document.getElementsByClassName("playingField")[0];
+        let enemyShips = document.getElementsByClassName("enemyShip");
+        let shipsArray = [];
 
-        setTimeout(function () { playerShip.secondary = true; }, 10000);
+        for(let i = 0; i < enemyShips.length; i++){
+            shipsArray[i] = enemyShips[i];
+        }
+        console.log(enemyShips);
+        
+        
+        if(enemyShips.length > 0){
+            let lockOnData = [];
+            //generate 6 homing missiles at center of ship
+    
+            for(let i = 0 ; i < secondaryRockets; i++){
+    
+                let playerMissile = document.createElement("div");
+                playerMissile.classList.add("playerMissile");
+                playerMissile.classList.add("playermissile" + secondaryIndex);
+                playerMissile.style.top = (playerShipBox.top + 20) + "px";
+                playerMissile.style.left = (playerShipBox.left + playerShipBox.width/2 - 10) + "px";
+    
+                gameArena.appendChild(playerMissile);
+    
+                var selectChance;
+                
+                
+                let enemyShipCoords = [];
+                var locked;
+                do{
+                    locked = false;
+                    for(let j = 0; j < shipsArray.length; j++){
+                        let enemyShipBox = shipsArray[j].getBoundingClientRect();
+                        selectChance = Math.floor(Math.random()*4)
+        
+                        if(selectChance == 0){
+                            j = shipsArray.length;
+                            enemyShipCoords[0] = enemyShipBox.top + enemyShipBox.height/2;
+                            enemyShipCoords[1] = enemyShipBox.left + enemyShipBox.width/2;
+    
+                            if(enemyShips.length >= secondaryRockets){
+                                if(checkMissileUnique(enemyShipCoords , lockOnData) == true){
+
+                                    console.log("testing 1");
+                                    console.log(enemyShipCoords);
+                                    
+                                    
+                                    lockOnData.push(enemyShipCoords);
+                                    locked = true;
+                                    shipsArray.splice(j,1);
+                                    j--;
+                                }
+                                else{
+                                    locked = false;
+                                }
+
+                            }
+                            else{
+                                lockOnData.push(enemyShipCoords);
+                                locked = true;
+                            }
+                            
+                        }
+                    }
+    
+                }while(locked == false);
+                
+                // animate missile to lockOnData[i][0] (x-pos) and lockOnData[i][1] (y-pos)
+                
+                
+                $(".playermissile" + secondaryIndex).animate({
+                    
+                    
+                    top: lockOnData[i][0] + "px" ,
+                    left: lockOnData[i][1] + "px"
+                
+                },{duration:800, queue:false});
+                setTimeout(function(){
+                    let secondaryExplosion = document.createElement("div");
+                    secondaryExplosion.classList.add("secondaryExplosion");
+                    secondaryExplosion.classList.add("secondaryexplosion" + secondaryExplodeIndex);
+                    secondaryExplosion.style.top = lockOnData[i][0] + "px";
+                    secondaryExplosion.style.left = lockOnData[i][1] + "px";
+
+                    gameArena.appendChild(secondaryExplosion);
+                    
+                    $(".secondaryexplosion" + secondaryExplodeIndex).animate({
+                        opacity: 0.01,
+                    }, {
+                        duration: 1000, queue: false, complete: function () {
+                            secondaryExplosion.remove()
+                        }
+                    });
+
+                    playerMissile.remove();
+                },810);
+
+                secondaryIndex++;
+            }
+    
+                //each missile will have the same vertical velocity but different horizontal acceleration.
+    
+                
+                //horizontal acceleration will range from -30px/s^2 -20px/s^2 -10px/s^2 10px/s^2 20px/s^2 30px/s^2, 
+    
+                //cease all acceleration after 2 seconds,
+    
+                // missiles will lock onto a target enemy ship,
+    
+                //missiles will continue until the enemy ship has been hit,
+    
+                    //if enemy ship has been destroyed missiles will find a new target
+                    // if no enemy ships remain missile will detonate
+    
+    
+    
+    
+    
+            
+            playerShip.secondary = false;
+    
+            setTimeout(function () { playerShip.secondary = true; }, 10000); 
+        }
+       
+       
     }
+}
+function checkMissileUnique(coords , allData){
+
+    for(let i = 0; i < allData.length; i++){
+        console.log(allData[i][0]);
+        console.log(allData[i][1]);
+        console.log(coords);
+        
+        if(allData[i][0] == coords[0] && allData[i][1] == coords[1]){
+            console.log("coords not unique");
+            return false;
+            
+            
+        }
+    }
+    console.log("coords are unique");
+    
+    return true;
+
 }
 function fireTertiary() {
     if (playerShip.tertiary == true) {
