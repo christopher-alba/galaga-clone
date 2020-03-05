@@ -12,7 +12,7 @@ let bulletIndex = 0;
 
 let bossBulletIndex = 0;
 let bossShotCounter = 0;
-var bossShotMultiple = 1;
+var bossShotMultiple = 15;
 
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
@@ -700,7 +700,10 @@ function enemyShots() {
         
         if(bossShotCounter == 3){
             bossShotCounter = 0;
-            bossShotMultiple++;
+            if(bossShotMultiple < 15){
+                bossShotMultiple++;
+            }
+            
         }
         setTimeout(function(){
             clearInterval(repeatBossShot);
