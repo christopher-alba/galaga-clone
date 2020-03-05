@@ -24,7 +24,7 @@ let secondaryRockets = 6;
 let secondaryHitIndex = 0;
 
 var primaryRepeat;
-let gameOn = true;
+let gameOn = false;
 let enemyHealth = 1;
 let maximumHP = 20;
 let healthScaling = 0;
