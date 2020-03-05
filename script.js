@@ -9,7 +9,10 @@ let currentBossHP = 20;
 let currentEnemySmallDamage = 1;
 let chanceToFire = 10;
 let bulletIndex = 0;
+
 let bossBulletIndex = 0;
+let bossShotCounter = 0;
+var bossShotMultiple = 1;
 
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
@@ -52,7 +55,7 @@ var playerShip = {
     tertiary: true,
     ultimate: true,
     primaryDamage: 1,
-    secondaryDamage: 4,
+    secondaryDamage: 0.1,
     tertiaryDamage: 16,
     ultimateDamage: 10,
     score: 0,
@@ -100,32 +103,32 @@ function primaryHit(bulletBox) {
 
 
 }
-function secondaryHit(shipBox){
+function secondaryHit(shipBox) {
     let gameArena = document.getElementsByClassName("playingField")[0];
     let secondaryHit = document.createElement("div");
 
     secondaryHit.classList.add("secondaryHit");
     secondaryHit.classList.add("secondaryhit" + secondaryHitIndex);
 
-    secondaryHit.style.top = Math.random()*(shipBox.height) + shipBox.top + "px";
-    secondaryHit.style.left = Math.random()*(shipBox.width) + shipBox.left + "px";
+    secondaryHit.style.top = Math.random() * (shipBox.height) + shipBox.top + "px";
+    secondaryHit.style.left = Math.random() * (shipBox.width) + shipBox.left + "px";
 
     gameArena.appendChild(secondaryHit);
     $(".secondaryHit" + secondaryHitIndex).animate({
         opacity: 0.01,
     }, {
         duration: 1000, queue: false, complete: function () {
-           secondaryHit.remove();
-           
+            secondaryHit.remove();
+
         }
     });
-    setTimeout(function(){
+    setTimeout(function () {
         secondaryHit.remove();
-    },1000);
+    }, 1000);
     secondaryHitIndex++;
-    
+
 }
-function bossDeath(enemyBossBox,enemyBoss){
+function bossDeath(enemyBossBox, enemyBoss) {
     let gameArena = document.getElementsByClassName("playingField")[0];
     let enemyScore = document.createElement("div");
     enemyScore.classList.add("largeScore");
@@ -139,6 +142,7 @@ function bossDeath(enemyBossBox,enemyBoss){
     }, 2000);
 
     enemyBoss.remove();
+    $(".bossHP").remove();
     let bossDeath = document.createElement("div");
     bossDeath.classList.add("bossDeath");
     bossDeath.style.top = enemyBossBox.top + "px";
@@ -154,7 +158,7 @@ function bossDeath(enemyBossBox,enemyBoss){
             bossDeath.remove()
         }
     });
-   
+
     playerShip.score += 1000 * playerShip.scoreMultiplier;
     addHealth(5);
     boss.spawned = false;
@@ -162,32 +166,32 @@ function bossDeath(enemyBossBox,enemyBoss){
     boss.health = currentBossHP;
     roundCounter = 0;
 }
-function smallEnemyDeath(enemyShip){
-    if(enemyShip != "empty"){
+function smallEnemyDeath(enemyShip) {
+    if (enemyShip != "empty") {
         let gameArena = document.getElementsByClassName("playingField")[0];
         let enemyShipBox = enemyShip.getBoundingClientRect();
         if (enemyShip != "empty") {
-            
+
             addHealth(0.2);
-    
+
             console.log(playerShip.health);
-    
+
             playerShip.scoreMultiplier += 1;
             playerShip.score += 100 * playerShip.scoreMultiplier;
             let enemyScore = document.createElement("div");
             enemyScore.classList.add("smallScore");
             enemyScore.textContent = "+" + Math.floor(100 * playerShip.scoreMultiplier);
-    
-    
+
+
             enemyScore.style.top = enemyShipBox.top + "px";
             enemyScore.style.left = enemyShipBox.left + "px";
-    
+
             gameArena.appendChild(enemyScore);
             setTimeout(function () {
                 enemyScore.remove();
             }, 1000);
-    
-    
+
+
             let enemyDeath = document.createElement("div");
             enemyDeath.classList.add("enemyDeath");
             enemyDeath.style.top = enemyShipBox.top + "px";
@@ -200,20 +204,20 @@ function smallEnemyDeath(enemyShip){
                     enemyDeath.remove()
                 }
             });
-    
-    
+
+
             enemyShip.remove();
             enemiesLeft--;
             console.log("enemies left: " + enemiesLeft);
-    
+
         }
     }
-    
-  
+
+
 
 }
 function checkEnemyHit() {
-    
+
 
 
     // Check Primary Weapon Hits
@@ -234,13 +238,20 @@ function checkEnemyHit() {
                     //console.log("enemy boss hit");
                     bullet.remove();
                     primaryHit(bulletBox);
+                    addHealth(0.2);
                     boss.health--;
 
 
                 }
                 if (boss.health <= 0) {
 
-                   bossDeath(enemyBossBox,enemyBoss);
+                    bossDeath(enemyBossBox, enemyBoss);
+                    if(bossShotMultiple >= 3){
+                        bossShotMultiple/= 3;
+                    }
+                    else{
+                        bossShotMultiple = 1;
+                    }
                 }
             }
 
@@ -252,16 +263,17 @@ function checkEnemyHit() {
         // check if bullets hit small enemies
         for (let j = 0; j < enemies.length; j++) {
             let enemyShip = enemies[j].reference;
-            
+
             if (bullet != undefined && enemyShip != "empty") {
                 let enemyShipBox = enemyShip.getBoundingClientRect();
                 let bulletBox = bullet.getBoundingClientRect();
-                
+
 
                 //if primary weapon hit
                 if (bulletBox.top < enemyShipBox.top + enemyShipBox.height && bulletBox.top + bulletBox.height > enemyShipBox.top && bulletBox.left > enemyShipBox.left && bulletBox.right < enemyShipBox.right) {
                     //console.log("enemy ship hit");
                     enemies[j].health -= playerShip.primaryDamage;
+                    addHealth(0.2);
                     bullet.remove();
                     primaryHit(bulletBox);
 
@@ -269,42 +281,69 @@ function checkEnemyHit() {
             }
 
             if (enemies[j].health <= 0) {
-                
+
                 smallEnemyDeath(enemyShip);
                 enemies[j].reference = "empty";
             }
         }
 
     }
-    // check secondary weapon hits
+    // check secondary weapon hits on small ships-
     let secondaryExplosions = document.getElementsByClassName("secondaryExplosion");
-    for(let i = 0; i < secondaryExplosions.length; i++){
-      
+    for (let i = 0; i < secondaryExplosions.length; i++) {
+
         let secondaryExplodeBox = secondaryExplosions[i].getBoundingClientRect();
-        for(let j = 0; j < enemies.length; j++){
-            if(enemies[j].reference != "empty"){
+        for (let j = 0; j < enemies.length; j++) {
+            if (enemies[j].reference != "empty") {
                 let enemyShipBox = enemies[j].reference.getBoundingClientRect();
 
-                if (enemyShipBox.left >= secondaryExplodeBox.left + secondaryExplodeBox.width || enemyShipBox.top >= secondaryExplodeBox.top + secondaryExplodeBox.height || 
-                    enemyShipBox.left + enemyShipBox.width <= secondaryExplodeBox.left || enemyShipBox.top + enemyShipBox.height <= secondaryExplodeBox.top)
-                {
+                if (enemyShipBox.left >= secondaryExplodeBox.left + secondaryExplodeBox.width || enemyShipBox.top >= secondaryExplodeBox.top + secondaryExplodeBox.height ||
+                    enemyShipBox.left + enemyShipBox.width <= secondaryExplodeBox.left || enemyShipBox.top + enemyShipBox.height <= secondaryExplodeBox.top) {
                     // no overlap
                 }
-                else
-                {
+                else {
                     enemies[j].health -= playerShip.secondaryDamage;
                     secondaryHit(enemyShipBox);
-                    if(enemies[j].health <= 0){
+                    if (enemies[j].health <= 0) {
                         smallEnemyDeath(enemies[j].reference);
                         enemies[j].reference = "empty";
                     }
-                    
+
                     // overlap
                 }
             }
+
             
-           
+
+
         }
+        let enemyBoss = document.getElementsByClassName("boss")[0];
+            if (enemyBoss != undefined) {
+                let enemyBossBox = enemyBoss.getBoundingClientRect();
+
+                if (enemyBossBox.left >= secondaryExplodeBox.left + secondaryExplodeBox.width || enemyBossBox.top >= secondaryExplodeBox.top + secondaryExplodeBox.height ||
+                    enemyBossBox.left + enemyBossBox.width <= secondaryExplodeBox.left || enemyBossBox.top + enemyBossBox.height <= secondaryExplodeBox.top) {
+                    console.log("boss not hit");
+
+                }
+                else {
+
+                    if(playerShip.secondaryDamage < 1){
+                        boss.health -= playerShip.secondaryDamage;
+                    }
+                    else{
+                        boss.health--;
+                    }
+                    
+                    secondaryHit(enemyBossBox);
+                    console.log("boss health: " + boss.health);
+                    if (boss.health <= 0) {
+                        bossDeath(enemyBossBox, document.getElementsByClassName("boss")[0]);
+                    }
+
+                }
+            }
+
     }
 
 }
@@ -320,7 +359,7 @@ function checkPlayerHit() {
             console.log("you have been hit");
             primaryHit(projectileBox);
             enemyProjectiles[i].remove();
-            playerShip.health--;
+            playerShip.health -= currentEnemySmallDamage;
             playerShip.scoreMultiplier = playerShip.scoreMultiplier / 4;
             console.log(playerShip.health);
 
@@ -337,6 +376,8 @@ function endGame() {
     let playerShip = document.getElementsByClassName("playerShip")[0];
     let enemyShips = $(".enemyShip");
     let boss = document.getElementsByClassName("boss")[0];
+    let bossHP = $(".bossHP");
+    let playerHP = $(".playerHP");
 
     for (let i = 0; i < enemyShips.length; i++) {
         if (enemyShips[i] != undefined) {
@@ -349,6 +390,13 @@ function endGame() {
     if (boss != undefined) {
         boss.remove();
     }
+    if(bossHP != undefined){
+        bossHP.remove();
+    }
+    if(playerHP != undefined){
+        playerHP.remove();
+    }
+    
     clearInterval(sensor1);
     clearInterval(sensor2);
     clearInterval(sensor3);
@@ -357,7 +405,7 @@ function endGame() {
     clearInterval(moveUp);
     clearInterval(moveDown);
     clearInterval(primaryRepeat);
-    
+
     toggleGUI();
     toggleDeathScreen();
 
@@ -380,6 +428,14 @@ function resetStats() {
     bossBulletIndex = 0;
     primaryIndex = 0;
 
+    maximumHP = 20;
+    enemyHealth = 1;
+    maximumHP = 20;
+    healthScaling = 0;
+
+    bossShotCounter = 0;
+    bossShotMultiple = 1;
+
     // Objects
     playerShip = {
         health: 20,
@@ -392,7 +448,7 @@ function resetStats() {
         tertiary: true,
         ultimate: true,
         primaryDamage: 1,
-        secondaryDamage: 4,
+        secondaryDamage: 0.1,
         tertiaryDamage: 16,
         ultimateDamage: 10,
         score: 0,
@@ -418,6 +474,7 @@ function startGame() {
     sensor1 = setInterval(function () {
         if (gameOn == true) {
             deleteEmpty();
+
             checkEnemyHit();
             checkPlayerHit();
             updateGUI();
@@ -451,22 +508,24 @@ function startGame() {
             if (roundCounter == 2) {
                 totalRounds++;
                 enemiesLeft = numberOfEnemies;
-                currentEnemySmallDamage++;
-                console.log(roundCounter);
+                currentEnemySmallDamage += 0.2;
+                // console.log(roundCounter);
 
                 roundCounter++;
-
-                displayBoss();
                 displayEnemy(numberOfEnemies);
+                displayBoss();
+                // displayEnemy(numberOfEnemies);
                 boss.spawned = true;
                 console.log(boss.health);
-                if (numberOfEnemies >= 20) {
 
-                    playerShip.primaryDamage += 10;
-                    playerShip.secondaryDamage += 5;
 
-                }
-                if(totalRounds >= 70){
+                playerShip.secondaryDamage *= 1.3;
+                maximumHP += 1;
+                console.log(maximumHP);
+
+
+
+                if (totalRounds >= 70) {
                     healthScaling++;
                 }
 
@@ -477,15 +536,12 @@ function startGame() {
                     totalRounds++;
                     roundCounter++;
 
-                    if (numberOfEnemies < 20) {
+                    if (numberOfEnemies < 25) {
                         numberOfEnemies += 1;
-                        enemyHealth += 0.25;
+
 
                     }
-                    else {
-                        enemyHealth += 1;
-                    }
-                    if(totalRounds >= 70){
+                    if (totalRounds >= 70) {
                         healthScaling++;
                     }
                     enemiesLeft = numberOfEnemies;
@@ -500,11 +556,22 @@ function startGame() {
     }, 1000);
 }
 function updateGUI() {
+    if(gameOn == true){
     // update each of the stats in the gui with new data
-    $(".healthBar p").text(playerShip.health);
-    $(".round").text("Round: " + totalRounds);
-    $(".score").text("Score: " + Math.floor(playerShip.score));
-    $(".scoreMultiplier").text(Math.floor(playerShip.scoreMultiplier));
+        $(".healthBar p").text(playerShip.health);
+        $(".round").text("Round: " + totalRounds);
+        $(".score").text("Score: " + Math.floor(playerShip.score));
+        $(".scoreMultiplier").text(Math.floor(playerShip.scoreMultiplier));
+
+        $(".bossHP").css("width", (400*boss.health/currentBossHP) + "px" )
+        
+        let playerLocation = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
+        $(".playerHP").css("top", (playerLocation.top + playerLocation.height + 10) + "px");
+        $(".playerHP").css("left", (playerLocation.left) + "px");
+        $(".playerHP").css("width", (playerLocation.width*playerShip.health/maximumHP) + "px");
+    }
+   
+
 }
 function enemyShots() {
 
@@ -512,72 +579,74 @@ function enemyShots() {
 
     var gameArena = document.getElementsByClassName("playingField")[0];
     //get all enemy planes
-    let enemyPlanes = document.getElementsByClassName("enemyShip");
+    let enemyPlanes = document.getElementsByClassName("smallShip");
 
 
 
     // console.log(enemyPlanes);
-    let repeatShots = setInterval(function(){
+    let repeatShots = setInterval(function () {
         for (let i = 0; i < enemyPlanes.length; i++) {
             if (Math.random() * 10 <= chanceToFire) {
                 let enemyPlane = enemyPlanes[i];
                 // console.log(enemyPlane);
-    
+
                 let enemyPlaneBox = enemyPlane.getBoundingClientRect();
-    
+
                 let enemyBullet = document.createElement("div");
-    
-                console.log(enemyPlane.src);
-                
-                if(enemyPlane.src.indexOf("Blue") != -1){
+
+                // console.log(enemyPlane.src);
+
+                if (enemyPlane.src.indexOf("Blue") != -1) {
                     enemyBullet.classList.add("enemyBulletBlue");
                 }
-                else if(enemyPlane.src.indexOf("Green") != -1){
+                else if (enemyPlane.src.indexOf("Green") != -1) {
                     enemyBullet.classList.add("enemyBulletGreen");
                 }
-                else if(enemyPlane.src.indexOf("Yellow") != -1){
+                else if (enemyPlane.src.indexOf("Yellow") != -1) {
                     enemyBullet.classList.add("enemyBulletYellow");
                 }
-                else if(enemyPlane.src.indexOf("Red") != -1){
+                else if (enemyPlane.src.indexOf("Red") != -1) {
                     enemyBullet.classList.add("enemyBulletRed");
                 }
-                else if(enemyPlane.src.indexOf("Purple") != -1){
+                else if (enemyPlane.src.indexOf("Purple") != -1) {
                     enemyBullet.classList.add("enemyBulletPurple");
                 }
-                else if(enemyPlane.src.indexOf("Ship") != -1){
+                else if (enemyPlane.src.indexOf("Ship") != -1) {
                     enemyBullet.classList.add("enemyBulletShip");
                 }
-                else if(enemyPlane.src.indexOf("boss") != -1){
+                else if (enemyPlane.src.indexOf("boss") != -1) {
                     enemyBullet.classList.add("enemyBulletBoss");
                 }
                 enemyBullet.classList.add("enemyBullet");
                 enemyBullet.classList.add("enemyProjectile");
                 enemyBullet.classList.add("enemybullet" + bulletIndex);
-    
-    
-    
+
+
+
                 enemyBullet.style.top = (enemyPlaneBox.top + 50) + "px";
                 enemyBullet.style.left = (enemyPlaneBox.left + 75 / 2) + "px";
                 // console.log(enemyBullet);
                 // console.log(enemyPlane);
-    
-    
-    
+
+                let duration = 6000 - totalRounds*100;
+                if(duration <= 500){
+                    duration = 500;
+                }
                 gameArena.appendChild(enemyBullet);
-                $(".enemybullet" + bulletIndex).animate({ top: (enemyPlaneBox.top + window.innerHeight) + "px" }, { duration: 6000, queue: false });
+                $(".enemybullet" + bulletIndex).animate({ top: (enemyPlaneBox.top + window.innerHeight) + "px" }, { duration: duration, queue: false });
                 setTimeout(function () {
                     // console.log( $(".enemybullet"+bulletIndex));
-    
+
                     enemyBullet.remove();
-                }, 6000);
+                }, duration);
                 bulletIndex++;
-    
-    
-    
+
+
+
             }
         }
-    
-    },100);
+
+    }, 100);
 
     var shotMultiplier = 1;
     // if(totalRounds >= 40){
@@ -586,38 +655,57 @@ function enemyShots() {
     // else{
     //     shotMultiplier = totalRounds/10 + 1
     // }
-    setTimeout(function(){
+    setTimeout(function () {
         clearInterval(repeatShots);
-    },100*(Math.floor(shotMultiplier)))
-   
+    }, 100 * (Math.floor(shotMultiplier)))
+
 
     if (document.getElementsByClassName("boss")[0] != undefined) {
+        bossShotCounter++;
 
 
         let bossBox = document.getElementsByClassName("boss")[0].getBoundingClientRect();
-        let bossBulletPosition = 0;
-        let playerBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
-        for (let i = 0; i < 6; i++) {
-            let bossBullet = document.createElement("div");
-            // console.log(bossBullet);
+        
+        repeatBossShot = setInterval(function(){
+            let bossBulletPosition = 0;
+            let playerBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
+            for (let i = 0; i < 6; i++) {
+                let bossBullet = document.createElement("div");
+                // console.log(bossBullet);
+    
+                bossBullet.classList.add("bossBullet");
+                bossBullet.classList.add("enemyProjectile");
+                bossBullet.classList.add("bossbullet" + bossBulletIndex);
+    
+                bossBullet.style.top = (bossBox.top + 100) + "px"
+                bossBullet.style.left = (bossBox.left + bossBulletPosition) + "px";
+                bossBulletPosition += 300 / 6;
+                gameArena.appendChild(bossBullet);
+                
+                let duration = 3000 - totalRounds*30;
+                if(duration < 700){
+                    duration = 700;
+                }
+    
+                $(".bossbullet" + bossBulletIndex).animate({ top: (playerBox.top + 20) + "px" }, { duration: duration, queue: false });
+                $(".bossbullet" + bossBulletIndex).animate({ left: (playerBox.left + 75 / 2) + "px" }, { duration: duration, queue: false });
+                bossBulletIndex++;
+                setTimeout(function () {
+                    bossBullet.remove();
+                }, duration);
+            }
+        },100) 
 
-            bossBullet.classList.add("bossBullet");
-            bossBullet.classList.add("enemyProjectile");
-            bossBullet.classList.add("bossbullet" + bossBulletIndex);
-
-            bossBullet.style.top = (bossBox.top + 100) + "px"
-            bossBullet.style.left = (bossBox.left + bossBulletPosition) + "px";
-            bossBulletPosition += 300 / 6;
-            gameArena.appendChild(bossBullet);
-
-
-            $(".bossbullet" + bossBulletIndex).animate({ top: (playerBox.top + 20) + "px" }, { duration: 6000, queue: false });
-            $(".bossbullet" + bossBulletIndex).animate({ left: (playerBox.left + 75 / 2) + "px" }, { duration: 6000, queue: false });
-            bossBulletIndex++;
-            setTimeout(function () {
-                bossBullet.remove();
-            }, 6000);
+        
+        
+        if(bossShotCounter == 3){
+            bossShotCounter = 0;
+            bossShotMultiple++;
         }
+        setTimeout(function(){
+            clearInterval(repeatBossShot);
+        },100*(bossShotMultiple))
+        
     }
 
 
@@ -650,9 +738,14 @@ function displayBoss() {
     let enemyBoss = document.createElement("img");
     enemyBoss.src = "images/boss.png";
     enemyBoss.classList.add("boss");
+    enemyBoss.classList.add("enemyShip");
 
     let gameArena = document.getElementsByClassName("playingField")[0];
     gameArena.appendChild(enemyBoss);
+
+    let enemyBossHP = document.createElement("div");
+    enemyBossHP.classList.add("bossHP");
+    gameArena.appendChild(enemyBossHP);
 }
 
 function displayEnemy(numberOfEnemies) {
@@ -665,77 +758,78 @@ function displayEnemy(numberOfEnemies) {
 
 
         let enemyShip = document.createElement("img");
-        if(totalRounds < 10){
+        if (totalRounds < 10) {
             enemyShip.src = "images/enemyBlue.png"
         }
-        else if(totalRounds < 20){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 20) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyGreen.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/enemyBlue.png"
             }
-            
+
         }
-        else if(totalRounds < 30){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 30) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyYellow.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/enemyGreen.png"
             }
-            
+
         }
-        else if(totalRounds < 40){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 40) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyYellow.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/enemyRed.png"
             }
-            
+
         }
-        else if(totalRounds < 50){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 50) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyPurple.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/enemyRed.png"
             }
-            
-            
+
+
         }
-        else if(totalRounds < 60){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 60) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyShip.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/enemyPurple.png"
             }
         }
-        else if(totalRounds < 70){
-            let chance = Math.floor(Math.random()*2 + 1);
-            if(chance < 2){
+        else if (totalRounds < 70) {
+            let chance = Math.floor(Math.random() * 2 + 1);
+            if (chance < 2) {
                 enemyShip.src = "images/enemyShip.png"
             }
-            else{
+            else {
                 enemyShip.src = "images/boss.png"
             }
 
         }
-        else if(totalRounds < 80){
+        else if (totalRounds < 80) {
             enemyShip.src = "images/boss.png"
         }
-        else if(totalRounds >= 80){
+        else if (totalRounds >= 80) {
             enemyShip.src = "images/boss.png"
         }
-        
-        
+
+
+        enemyShip.classList.add("smallShip");
         enemyShip.classList.add("enemyShip");
         enemyShip.classList.add(enemyID);
         enemyID++;
@@ -749,17 +843,63 @@ function displayEnemy(numberOfEnemies) {
         let gameArena = document.getElementsByClassName("playingField")[0];
         gameArena.appendChild(enemyShip);
 
+
+
     }
 
     makeEnemies(numberOfEnemies);
+    applyHealth();
 
+}
+function applyHealth() {
+    for (let i = 0; i < enemies.length; i++) {
+        let source = enemies[i].reference.src;
+
+
+        if (source != undefined) {
+            if (source.indexOf("Blue") != -1) {
+
+
+            }
+            else if (source.indexOf("Green") != -1) {
+                enemies[i].health = (playerShip.primaryDamage * 3);
+            }
+            else if (source.indexOf("Yellow") != -1) {
+                enemies[i].health = (playerShip.primaryDamage * 6);
+            }
+            else if (source.indexOf("Red") != -1) {
+                enemies[i].health = (playerShip.primaryDamage * 9);
+            }
+            else if (source.indexOf("Purple") != -1) {
+                enemies[i].health = (playerShip.primaryDamage * 12);
+            }
+            else if (source.indexOf("Ship") != -1) {
+                if (totalRounds >= 70) {
+                    enemies[i].health = (playerShip.primaryDamage * 15 + healthScaling * 10);
+                }
+                else {
+                    enemies[i].health = (playerShip.primaryDamage * 15);
+                }
+
+            }
+            else if (source.indexOf("boss") != -1) {
+                if (totalRounds >= 70) {
+                    enemies[i].health = (playerShip.primaryDamage * 18 + healthScaling * 10);
+                }
+                else {
+                    enemies[i].health = (playerShip.primaryDamage * 18);
+                }
+            }
+        }
+
+    }
 }
 function Enemy() {
     this.health = enemyHealth;
     this.damage = currentEnemySmallDamage;
 
     // get all displayed enemy ships
-    let allEnemies = $(".enemyShip");
+    let allEnemies = $(".smallShip");
     //console.log(allEnemies);
 
     // check through each enemy in enemies array if they have the reference
@@ -782,46 +922,14 @@ function Enemy() {
     for (let i = 0; i < possibleEnemies.length; i++) {
         if (possibleEnemies[i] != "empty") {
             this.reference = possibleEnemies[i];
-            let source = possibleEnemies[i].src;
-            // console.log(this.reference);
-            if(source.indexOf("Blue") != -1){
-               
-               
-            }
-            else if(source.indexOf("Green") != -1){
-               this.health = playerShip.primaryDamage*2;
-            }
-            else if(source.indexOf("Yellow") != -1){
-                this.health = playerShip.primaryDamage*3;
-            }
-            else if(source.indexOf("Red") != -1){
-                this.health = playerShip.primaryDamage*4;
-            }
-            else if(source.indexOf("Purple") != -1){
-                this.health = playerShip.primaryDamage*5   
-            }
-            else if(source.indexOf("Ship") != -1){
-                if(totalRounds >= 70){
-                    this.health = playerShip.primaryDamage*3 + healthScaling;
-                }
-                else{
-                    this.health = playerShip.primaryDamage*3;
-                }
-                
-            }
-            else if(source.indexOf("boss") != -1){
-                if(totalRounds >= 70){
-                    this.health = playerShip.primaryDamage*3 + healthScaling;
-                }
-                else{
-                    this.health += playerShip.primaryDamage*3;
-                }
-            }
-           
+
+
 
         }
     }
-    console.log(this.health);
+
+
+
 
     //console.log(enemies);
 
@@ -834,6 +942,10 @@ function displayPlayer() {
     playerShip.src = "images/playerShip.png"
     playerShip.classList.add("playerShip");
     gameArena.appendChild(playerShip);
+
+    let playerHP = document.createElement("div");
+    playerHP.classList.add("playerHP");
+    gameArena.appendChild(playerHP);
 
 }
 function addHealth(health) {
@@ -848,44 +960,44 @@ function addHealth(health) {
 // ship weapons
 function firePrimary() {
 
-    if(primaryOn == false){
+    if (primaryOn == false) {
         primaryOn = true;
-        
-        primaryRepeat = setInterval(function(){
-       //console.log("firing primary");
-        var primary = document.createElement("div");
 
-        primary.classList.add("primary");
-        primary.classList.add("primary" + primaryIndex);
+        primaryRepeat = setInterval(function () {
+            //console.log("firing primary");
+            var primary = document.createElement("div");
 
-        let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
+            primary.classList.add("primary");
+            primary.classList.add("primary" + primaryIndex);
 
-        primary.style.position = "absolute";
+            let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
 
-        primary.style.top = (ship.top) + "px";
-        primary.style.left = (ship.left + 75 / 2) + "px";
+            primary.style.position = "absolute";
 
-        var gameArena = document.getElementsByClassName("playingField")[0];
+            primary.style.top = (ship.top) + "px";
+            primary.style.left = (ship.left + 75 / 2) + "px";
 
-        gameArena.appendChild(primary);
+            var gameArena = document.getElementsByClassName("playingField")[0];
 
-        $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false });
-        primaryIndex++;
+            gameArena.appendChild(primary);
 
-        setTimeout(function () { primary.remove(); }, 500);
+            $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false });
+            primaryIndex++;
 
-        },100);
+            setTimeout(function () { primary.remove(); }, 500);
+
+        }, 100);
     }
-        
- 
 
-        //fire primary
-        
 
-        
-    
+
+    //fire primary
+
+
+
+
 }
-function stopPrimary(){
+function stopPrimary() {
     clearInterval(primaryRepeat);
     primaryOn = false;
 }
@@ -893,85 +1005,91 @@ function fireSecondary() {
     if (playerShip.secondary == true) {
         //console.log("firing secondary");
         //fire secondary
-        let playerShipBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();   
+        let playerShipBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
         let gameArena = document.getElementsByClassName("playingField")[0];
         let enemyShips = document.getElementsByClassName("enemyShip");
         let shipsArray = [];
 
-        for(let i = 0; i < enemyShips.length; i++){
+        for (let i = 0; i < enemyShips.length; i++) {
             shipsArray[i] = enemyShips[i];
         }
         console.log(enemyShips);
-        
-        
-        if(enemyShips.length > 0){
+
+
+        if (enemyShips.length > 0) {
             let lockOnData = [];
             //generate 6 homing missiles at center of ship
-    
-            for(let i = 0 ; i < secondaryRockets; i++){
-    
+            let fireAmount = secondaryRockets;
+            if(shipsArray.length < secondaryRockets){
+
+                fireAmount = shipsArray.length;
+                
+            }
+
+            for (let i = 0; i < fireAmount; i++) {
+
                 let playerMissile = document.createElement("div");
                 playerMissile.classList.add("playerMissile");
                 playerMissile.classList.add("playermissile" + secondaryIndex);
                 playerMissile.style.top = (playerShipBox.top + 20) + "px";
-                playerMissile.style.left = (playerShipBox.left + playerShipBox.width/2 - 10) + "px";
-    
+                playerMissile.style.left = (playerShipBox.left + playerShipBox.width / 2 - 10) + "px";
+
                 gameArena.appendChild(playerMissile);
-    
+
                 var selectChance;
-                
-                
+
+
                 let enemyShipCoords = [];
                 var locked;
-                do{
+                do {
                     locked = false;
-                    for(let j = 0; j < shipsArray.length; j++){
+                    for (let j = 0; j < shipsArray.length; j++) {
                         let enemyShipBox = shipsArray[j].getBoundingClientRect();
-                        selectChance = Math.floor(Math.random()*4)
-        
-                        if(selectChance == 0){
+                        selectChance = Math.floor(Math.random() * 4)
+
+                        if (selectChance == 0) {
                             j = shipsArray.length;
-                            enemyShipCoords[0] = enemyShipBox.top + enemyShipBox.height/2;
-                            enemyShipCoords[1] = enemyShipBox.left + enemyShipBox.width/2;
-    
-                            if(enemyShips.length >= secondaryRockets){
-                                if(checkMissileUnique(enemyShipCoords , lockOnData) == true){
+                            enemyShipCoords[0] = enemyShipBox.top + enemyShipBox.height / 2;
+                            enemyShipCoords[1] = enemyShipBox.left + enemyShipBox.width / 2;
+
+                            if (enemyShips.length >= secondaryRockets) {
+                                if (checkMissileUnique(enemyShipCoords, lockOnData) == true) {
 
                                     console.log("testing 1");
                                     console.log(enemyShipCoords);
-                                    
-                                    
+
+
                                     lockOnData.push(enemyShipCoords);
                                     locked = true;
-                                    shipsArray.splice(j,1);
+                                    shipsArray.splice(j, 1);
                                     j--;
                                 }
-                                else{
+                                else {
                                     locked = false;
                                 }
 
                             }
-                            else{
+                            else {
                                 lockOnData.push(enemyShipCoords);
                                 locked = true;
                             }
-                            
+
                         }
                     }
-    
-                }while(locked == false);
-                
+
+                } while (locked == false);
+
                 // animate missile to lockOnData[i][0] (x-pos) and lockOnData[i][1] (y-pos)
-                
-                
+
+
                 $(".playermissile" + secondaryIndex).animate({
-                    
-                    
-                    top: lockOnData[i][0] + "px" ,
+
+
+                    top: lockOnData[i][0] + "px",
                     left: lockOnData[i][1] + "px"
-                
-                },{duration:800, queue:false});
-                setTimeout(function(){
+
+                }, { duration: 800, queue: false });
+                setTimeout(function () {
                     let secondaryExplosion = document.createElement("div");
                     secondaryExplosion.classList.add("secondaryExplosion");
                     secondaryExplosion.classList.add("secondaryexplosion" + secondaryExplodeIndex);
@@ -979,7 +1097,7 @@ function fireSecondary() {
                     secondaryExplosion.style.left = lockOnData[i][1] + "px";
 
                     gameArena.appendChild(secondaryExplosion);
-                    
+
                     $(".secondaryexplosion" + secondaryExplodeIndex).animate({
                         opacity: 0.01,
                     }, {
@@ -989,54 +1107,54 @@ function fireSecondary() {
                     });
 
                     playerMissile.remove();
-                },810);
+                }, 810);
 
                 secondaryIndex++;
             }
-    
-                //each missile will have the same vertical velocity but different horizontal acceleration.
-    
-                
-                //horizontal acceleration will range from -30px/s^2 -20px/s^2 -10px/s^2 10px/s^2 20px/s^2 30px/s^2, 
-    
-                //cease all acceleration after 2 seconds,
-    
-                // missiles will lock onto a target enemy ship,
-    
-                //missiles will continue until the enemy ship has been hit,
-    
-                    //if enemy ship has been destroyed missiles will find a new target
-                    // if no enemy ships remain missile will detonate
-    
-    
-    
-    
-    
-            
+
+            //each missile will have the same vertical velocity but different horizontal acceleration.
+
+
+            //horizontal acceleration will range from -30px/s^2 -20px/s^2 -10px/s^2 10px/s^2 20px/s^2 30px/s^2, 
+
+            //cease all acceleration after 2 seconds,
+
+            // missiles will lock onto a target enemy ship,
+
+            //missiles will continue until the enemy ship has been hit,
+
+            //if enemy ship has been destroyed missiles will find a new target
+            // if no enemy ships remain missile will detonate
+
+
+
+
+
+
             playerShip.secondary = false;
-    
-            setTimeout(function () { playerShip.secondary = true; }, 10000); 
+
+            setTimeout(function () { playerShip.secondary = true; }, 10000);
         }
-       
-       
+
+
     }
 }
-function checkMissileUnique(coords , allData){
+function checkMissileUnique(coords, allData) {
 
-    for(let i = 0; i < allData.length; i++){
-        console.log(allData[i][0]);
-        console.log(allData[i][1]);
-        console.log(coords);
-        
-        if(allData[i][0] == coords[0] && allData[i][1] == coords[1]){
-            console.log("coords not unique");
+    for (let i = 0; i < allData.length; i++) {
+        // console.log(allData[i][0]);
+        // console.log(allData[i][1]);
+        // console.log(coords);
+
+        if (allData[i][0] == coords[0] && allData[i][1] == coords[1]) {
+            // console.log("coords not unique");
             return false;
-            
-            
+
+
         }
     }
-    console.log("coords are unique");
-    
+    // console.log("coords are unique");
+
     return true;
 
 }
@@ -1093,13 +1211,13 @@ function moveShip(keyPressed) {
             case 37:
                 // alert('Left key pressed');
                 if (stopLeft == false && leftCount < 1) {
-                    
-                    
+
+
 
                     leftCount++;
                     moveLeft = setInterval(function () {
-                        $(".playerShip").animate({ left: '-=' + moveVel + 'px' }, { duration: 10, queue: false },);
-                    },10)
+                        $(".playerShip").animate({ left: '-=' + moveVel + 'px' }, { duration: 10, queue: false });
+                    }, 10)
 
                 }
 
@@ -1109,7 +1227,7 @@ function moveShip(keyPressed) {
                     upCount++;
                     moveUp = setInterval(function () {
                         $(".playerShip").animate({ top: '-=' + moveVel + 'px' }, { duration: 10, queue: false });
-                    },10)
+                    }, 10)
                 }
                 // alert('Up key pressed');
 
@@ -1144,20 +1262,20 @@ function moveShip(keyPressed) {
 
 
 }
-function stopShip(keyPressed){
-    if(keyPressed == 37){
+function stopShip(keyPressed) {
+    if (keyPressed == 37) {
         clearInterval(moveLeft);
         leftCount = 0;
     }
-    else if(keyPressed == 38){
+    else if (keyPressed == 38) {
         clearInterval(moveUp);
         upCount = 0;
     }
-    else if(keyPressed == 39){
+    else if (keyPressed == 39) {
         clearInterval(moveRight);
         rightCount = 0;
     }
-    else if(keyPressed == 40){
+    else if (keyPressed == 40) {
         clearInterval(moveDown);
         downCount = 0;
     }
@@ -1203,28 +1321,32 @@ $(document).keyup(function (event) {
         if (keypressed == 37 || keypressed == 38 || keypressed == 39 || keypressed == 40) {
             stopShip(event.keyCode);
         }
-        if(keypressed == 81){
+        if (keypressed == 81) {
             stopPrimary();
         }
     }
 
 });
 
-function checkBounds(){
+function checkBounds() {
     let playerShip = document.getElementsByClassName("playerShip")[0];
-    let ship = playerShip.getBoundingClientRect();
-    
-    if (ship.top <= 100) {
-        clearInterval(moveUp);
-    }
-    if (ship.top >= window.innerHeight - 150) {
-        clearInterval(moveDown);
-    }
-    if (ship.right >= window.innerWidth - 100) {
-        clearInterval(moveRight);
-    }
-    if (ship.left <= 100) {
-        clearInterval(moveLeft);
+
+    if (playerShip != undefined) {
+        let ship = playerShip.getBoundingClientRect();
+
+        if (ship.top <= 100) {
+            clearInterval(moveUp);
+        }
+        if (ship.top >= window.innerHeight - 150) {
+            clearInterval(moveDown);
+        }
+        if (ship.right >= window.innerWidth - 100) {
+            clearInterval(moveRight);
+        }
+        if (ship.left <= 100) {
+            clearInterval(moveLeft);
+        }
+
     }
 
 }
@@ -1242,5 +1364,6 @@ $(".restartButton").click(function () {
 $(".returnMenu").click(function () {
     toggleDeathScreen();
     $(".mainMenu").slideToggle(1000);
+
 
 })
