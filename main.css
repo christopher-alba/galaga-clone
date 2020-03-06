@@ -98,10 +98,12 @@
     color:gold;
 }
 html{
-    overflow-y:hidden !important;
+    overflow-y:hidden ;
+    overflow-x:hidden ;
 }
 body{
-    overflow-y:hidden !important;
+    overflow-y:hidden ;
+    overflow-x:hidden ;
 }
 .enemyShip{
     position:absolute;
