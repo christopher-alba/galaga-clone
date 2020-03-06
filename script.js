@@ -2,11 +2,12 @@
 // global variables
 let enemyID = 0;
 var enemies = [];
-let enemiesLeft = 1;
+var enemiesLeft;
+let maxEnemies = 25;
 let totalRounds = 0;
 let roundCounter = 0;
 let currentBossHP = 20;
-let currentEnemySmallDamage = 1;
+var currentEnemySmallDamage;
 let chanceToFire = 10;
 let bulletIndex = 0;
 
@@ -14,20 +15,23 @@ let bossBulletIndex = 0;
 let bossShotCounter = 0;
 var bossShotMultiple = 1;
 
+var primaryRepeat;
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
 let primaryOn = false;
+let primaryCooldown = 100;
+let primaryBossDamage = 1;
 
 let secondaryIndex = 0;
 let secondaryExplodeIndex = 0;
 let secondaryRockets = 6;
 let secondaryHitIndex = 0;
 
-var primaryRepeat;
+
 let gameOn = false;
 let enemyHealth = 1;
 let maximumHP = 20;
-let healthScaling = 0;
+let healthScaling = 1;
 
 var sensor1;
 var sensor2;
@@ -55,7 +59,7 @@ var playerShip = {
     tertiary: true,
     ultimate: true,
     primaryDamage: 1,
-    secondaryDamage: 0.1,
+    secondaryDamage: 0.1*Math.pow(1.3,totalRounds/3),
     tertiaryDamage: 16,
     ultimateDamage: 10,
     score: 0,
@@ -137,10 +141,12 @@ function resetStats() {
     bossBulletIndex = 0;
     primaryIndex = 0;
 
+
     maximumHP = 20;
-    enemyHealth = 1;
-    maximumHP = 20;
-    healthScaling = 0;
+    healthScaling = 1;
+
+    primaryCooldown = 100;
+    primaryBossDamage = 1;
 
     bossShotCounter = 0;
     bossShotMultiple = 1;
@@ -175,8 +181,16 @@ function startGame() {
     gameOn = true;
     displayPlayer();
     toggleGUI();
+    currentEnemySmallDamage = 0.2*totalRounds/4;
 
-    let numberOfEnemies = 1;
+    var numberOfEnemies;
+    if(totalRounds <= maxEnemies - 1){
+        numberOfEnemies = totalRounds + 1 ;
+    }
+    else{
+        numberOfEnemies = maxEnemies;
+    }
+    enemiesLeft = numberOfEnemies;
     displayEnemy(numberOfEnemies);
 
 
@@ -195,7 +209,7 @@ function startGame() {
 
 
 
-    }, 45);
+    }, 10);
 
 
     sensor2 = setInterval(function () {
@@ -217,7 +231,7 @@ function startGame() {
             if (roundCounter == 2) {
                 totalRounds++;
                 enemiesLeft = numberOfEnemies;
-                currentEnemySmallDamage += 0.2;
+                currentEnemySmallDamage = 0.2*totalRounds/3;
                 // console.log(roundCounter);
 
                 roundCounter++;
@@ -228,7 +242,7 @@ function startGame() {
                 console.log(boss.health);
 
 
-                playerShip.secondaryDamage *= 1.3;
+                playerShip.secondaryDamage = 0.1*Math.pow(1.3,totalRounds/3);
                 maximumHP += 1;
                 console.log(maximumHP);
 
@@ -236,6 +250,7 @@ function startGame() {
 
                 if (totalRounds >= 70) {
                     healthScaling++;
+                    playerShip.primaryDamage = 1*Math.pow(1.05,totalRounds) - 1*Math.pow(1.05,69);
                 }
 
 
@@ -245,13 +260,14 @@ function startGame() {
                     totalRounds++;
                     roundCounter++;
 
-                    if (numberOfEnemies < 25) {
-                        numberOfEnemies += 1;
+                    if (numberOfEnemies < maxEnemies) {
+                        numberOfEnemies = totalRounds + 1;
 
 
                     }
                     if (totalRounds >= 70) {
-                        healthScaling++;
+                        healthScaling = totalRounds - 70 + 1;
+                        playerShip.primaryDamage = 1*Math.pow(1.05,totalRounds) - 1*Math.pow(1.05,69);
                     }
                     enemiesLeft = numberOfEnemies;
                     displayEnemy(numberOfEnemies);
@@ -282,6 +298,10 @@ function updateGUI() {
    
 
 }
+function toggleGUI() {
+    $(".playerGUI").toggle(500);
+}
+
 // ************************************************************************************************************************************************
 // ************************************************************************************************************************************************
 //                                                             Ship weapons
@@ -315,7 +335,7 @@ function firePrimary() {
 
             setTimeout(function () { primary.remove(); }, 500);
 
-        }, 100);
+        }, primaryCooldown);
     }
 
 
@@ -347,13 +367,10 @@ function fireSecondary() {
 
         if (enemyShips.length > 0) {
             let lockOnData = [];
+            
             //generate 6 homing missiles at center of ship
             let fireAmount = secondaryRockets;
-            if(shipsArray.length < secondaryRockets){
-
-                fireAmount = shipsArray.length;
-                
-            }
+            let firedCount = 0;
 
             for (let i = 0; i < fireAmount; i++) {
 
@@ -381,17 +398,18 @@ function fireSecondary() {
                             enemyShipCoords[0] = enemyShipBox.top + enemyShipBox.height / 2;
                             enemyShipCoords[1] = enemyShipBox.left + enemyShipBox.width / 2;
 
-                            if (enemyShips.length >= secondaryRockets) {
+                            if (enemyShips.length >= secondaryRockets || firedCount < enemyShips.length) {
                                 if (checkMissileUnique(enemyShipCoords, lockOnData) == true) {
 
-                                    console.log("testing 1");
-                                    console.log(enemyShipCoords);
+                                    // console.log("testing 1");
+                                    // console.log(enemyShipCoords);
 
 
                                     lockOnData.push(enemyShipCoords);
                                     locked = true;
-                                    shipsArray.splice(j, 1);
-                                    j--;
+                                    firedCount++;
+                                    // shipsArray.splice(j, 1);
+                                    // j--;
                                 }
                                 else {
                                     locked = false;
@@ -399,8 +417,10 @@ function fireSecondary() {
 
                             }
                             else {
+
                                 lockOnData.push(enemyShipCoords);
                                 locked = true;
+                               
                             }
 
                         }
@@ -487,13 +507,38 @@ function checkMissileUnique(coords, allData) {
     return true;
 
 }
+function changePrimaryCooldown(){
+    clearInterval(primaryRepeat);
+    primaryOn = false;
+    firePrimary();
+}
 function fireTertiary() {
     if (playerShip.tertiary == true) {
         //console.log("firing tertiary");
         //fire tertiary
-        playerShip.tertiary = false;
 
-        setTimeout(function () { playerShip.tertiary = true; }, 25000);
+        primaryCooldown = 10;
+        primaryBossDamage++;
+        changePrimaryCooldown();
+        playerShip.tertiary = false;
+        setTimeout(function(){
+            primaryBossDamage--;
+            primaryCooldown = 500;
+            changePrimaryCooldown();
+            
+            setTimeout(function(){
+                primaryCooldown = 100;
+                changePrimaryCooldown();
+                
+                setTimeout(function () { playerShip.tertiary = true; }, 20000);
+            },5000);
+        },10000);
+
+      
+
+        
+
+        
     }
 }
 function fireUltimate() {
@@ -848,7 +893,28 @@ function displayPlayer() {
 
 
 
+function checkBounds() {
+    let playerShip = document.getElementsByClassName("playerShip")[0];
 
+    if (playerShip != undefined) {
+        let ship = playerShip.getBoundingClientRect();
+
+        if (ship.top <= 100) {
+            clearInterval(moveUp);
+        }
+        if (ship.top >= window.innerHeight - 150) {
+            clearInterval(moveDown);
+        }
+        if (ship.right >= window.innerWidth - 100) {
+            clearInterval(moveRight);
+        }
+        if (ship.left <= 100) {
+            clearInterval(moveLeft);
+        }
+
+    }
+
+}
 function checkEnemyHit() {
 
 
@@ -872,7 +938,7 @@ function checkEnemyHit() {
                     bullet.remove();
                     primaryHit(bulletBox);
                     addHealth(0.2);
-                    boss.health--;
+                    boss.health-= primaryBossDamage;
 
 
                 }
@@ -1005,7 +1071,11 @@ function checkPlayerHit() {
     }
 
 }
-
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
+//                                           Enemy Shots, Apply Health to enemies
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
 function enemyShots() {
 
 
@@ -1182,20 +1252,13 @@ function applyHealth() {
                 enemies[i].health = (playerShip.primaryDamage * 12);
             }
             else if (source.indexOf("Ship") != -1) {
-                if (totalRounds >= 70) {
-                    enemies[i].health = (playerShip.primaryDamage * 15 + healthScaling * 10);
-                }
-                else {
-                    enemies[i].health = (playerShip.primaryDamage * 15);
-                }
+
+                    enemies[i].health = (playerShip.primaryDamage * 15)
 
             }
             else if (source.indexOf("boss") != -1) {
                 if (totalRounds >= 70) {
-                    enemies[i].health = (playerShip.primaryDamage * 18 + healthScaling * 10);
-                }
-                else {
-                    enemies[i].health = (playerShip.primaryDamage * 18);
+                    enemies[i].health = healthScaling * 10;
                 }
             }
         }
@@ -1203,6 +1266,11 @@ function applyHealth() {
     }
 }
 
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
+//                                           Add Health to Player, Move Player, Stop Player
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
 function addHealth(health) {
     if (playerShip.health < maximumHP) {
         playerShip.health += health
@@ -1212,8 +1280,6 @@ function addHealth(health) {
     }
 
 }
-// ship weapons
-
 function moveShip(keyPressed) {
 
 
@@ -1318,15 +1384,7 @@ function stopShip(keyPressed) {
         downCount = 0;
     }
 }
-function toggleGUI() {
-    $(".playerGUI").toggle(500);
-}
-function toggleDeathScreen() {
-    $(".scoreDeath").text("Score: " + playerShip.score);
-    $(".roundDeath").text("Rounds Beaten: " + totalRounds);
-    $(".deathScreen").toggle(500);
 
-}
 $(document).keydown(function (event) {
 
 
@@ -1366,42 +1424,31 @@ $(document).keyup(function (event) {
 
 });
 
-function checkBounds() {
-    let playerShip = document.getElementsByClassName("playerShip")[0];
-
-    if (playerShip != undefined) {
-        let ship = playerShip.getBoundingClientRect();
-
-        if (ship.top <= 100) {
-            clearInterval(moveUp);
-        }
-        if (ship.top >= window.innerHeight - 150) {
-            clearInterval(moveDown);
-        }
-        if (ship.right >= window.innerWidth - 100) {
-            clearInterval(moveRight);
-        }
-        if (ship.left <= 100) {
-            clearInterval(moveLeft);
-        }
-
-    }
-
-}
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
+//                                           Main Menu Button Listeners and functions
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
 
 $(".startButton").click(function () {
 
     $(".mainMenu").slideToggle(1000);
     setTimeout(function () { startGame(); }, 1000);
-})
+});
 $(".restartButton").click(function () {
 
     toggleDeathScreen();
     setTimeout(function () { startGame(); }, 1000);
-})
+});
 $(".returnMenu").click(function () {
     toggleDeathScreen();
     $(".mainMenu").slideToggle(1000);
 
 
-})
+});
+function toggleDeathScreen() {
+    $(".scoreDeath").text("Score: " + playerShip.score);
+    $(".roundDeath").text("Rounds Beaten: " + totalRounds);
+    $(".deathScreen").toggle(500);
+
+}
