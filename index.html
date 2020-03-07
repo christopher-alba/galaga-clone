@@ -10,20 +10,31 @@
     
     <div class="playingField">
         <div class = "mainMenu">
-            <div class = "menuButton">
-                <p>under construction</p>
+            <img src="images/boss2.png" alt="boss 2 picture" class="menuImg">
+            <button class = "controlButton menuButton"><h1>Controls</h1></button>
+            
+            <div class = "info controls">
+                <h2>Abilities:</h2>
+                <h3>Q: twin lasers</h3>
+                <p>Hold down Q for a continuous fire laser with a base fire rate of 10 shots per second. Hitting an enemy with this ability heals you for 0.2 health.</p>
+                <h3>W: homing bombs</h3>
+                <p>Press W to fire 6 homing smart bombs with targeting system that ensures unique target selection per bomb. <strong> 10 Second Cooldown</strong></p>
+                <h3>E: rapid fire mode</h3>
+                <p>Press E to increase the attackspeed of your twin lasers to 100 shots per second and deal 2x damage to bosses. <strong>20 Second Cooldown</strong></p>
+                <h3>R: sword and shield</h3>
+                <p>Press R to gain a shield that absorbs all incoming damage for 10 seconds. <strong>20 Second Cooldown</strong> Press R while the shield is active to fire a wide laser that deals damage that scales with the damage the shield absorbs squared <strong>1 minute cooldown</strong>.</p>
+                <h2>Movement:</h2>
+                <p>Hold down Arrow Keys to move.</p>
             </div>
-            <div class = "menuButton">
-                <p>under construction</p>
-            </div>
-            <div class = "menuButton">
-                <p>under construction</p>
-            </div>
-            <div class = "menuButton">
-                <p>under construction</p>
-            </div>
-            <div class = "menuButton">
-                <p>under construction</p>
+            <button class = "objectivesButton menuButton"><h1>How to Play</h1></button>
+            <div class="info objectives">
+                <h3>Rounds</h3>
+                <p>Each round you will face a wave of enemies that shoot at you. When you kill all the enemies in the wave, another wave will spawn. Every 3 rounds, you will face a boss that you must kill. The higher the round, the more difficult the enemies. There are an infinite number of rounds in this game, so you can play until you die.</p>
+                <h3>Health</h3>
+                <p>For each small enemy you kill you gain 0.2 health and for each boss kill you gain 5 health. Your maximum health starts off at 20 and increases by 1 at the start of each boss round. When hit by an enemy projectile, your health will decrease until it reaches 0,then it's game over. </p>
+                <h3>Score</h3>
+                <p>Killing a small unit grants 100 points and killing a boss grants 1000 points. The points you earn are multiplied by your score multiplier, which can be increased by killing small enemies and bosses. Small kills increase your score multiplier by 1 and boss kills increase it by the round number squared. When you get hit by a projectile, your score multiplier is quartered until it reaches 0.</p>
+
             </div>
             <div class = "menuButton startButton">
                 <h1>Start Game</h1>
@@ -48,56 +59,55 @@
         <div class="playerGUI">
             <div class="bars">
                 <div class="healthBar">
-                    <p>Display health here</p>
+                    
                 </div>
-                <div class="experienceBar">
-                    <p>Display experience here</p>
-                </div>
+                <div class="currentHP"></div>
+                <p class="healthNumbers">Display health here</p>
             </div>
             <div class="cooldowns">
                 <div class=" cdBox">
-                    <div>
+                    <div class="abilityLetter">
                         <p>Q</p>
                     </div>
-                    <div>
-                        <p class="primaryCooldown">0.0</p>
+                    <div class="status primaryCooldown">
+                        <p class="">ACTIVE</p>
                     </div>
                     
                 </div>
-                <div class="secondaryCooldown cdBox">
-                    <div>
+                <div class=" cdBox">
+                    <div class="abilityLetter">
                         <p>W</p>
                     </div>
-                    <div>
-                        <p class="primaryCooldown">0.0</p>
+                    <div class="status secondaryCooldown">
+                        <p class="">ACTIVE</p>
                     </div>
                 </div>
-                <div class="tertiaryCooldown cdBox">
-                    <div>
+                <div class=" cdBox">
+                    <div class="abilityLetter">
                         <p>E</p>
                     </div>
-                    <div>
-                        <p class="primaryCooldown">0.0</p>
+                    <div class="status tertiaryCooldown">
+                        <p class="">ACTIVE</p>
                     </div>
                 </div>
-                <div class="ultimateCooldown cdBox">
-                    <div>
+                <div class="cdBox">
+                    <div class="abilityLetter">
                         <p>R</p>
                     </div>
-                    <div>
-                        <p class="primaryCooldown">0.0</p>
+                    <div class="status ultimateCooldown">
+                        <p class="">ACTIVE</p>
                     </div>
                 </div>
             </div>
             <div class="gameNumbers">
                 <p class="score">Display Score Here</p>
-                <p class="time">Display Time Here</p>
+                
                 <p class="round">Display Round Here</p>
                 
                 
             </div>
             <div class="scoreMultiplier">
-                <p>Display Score Multiplier Here</p>
+                <p>x9999</p>
             </div>
             
 

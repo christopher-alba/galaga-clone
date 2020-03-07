@@ -7,6 +7,11 @@ let maxEnemies = 25;
 let totalRounds = 0;
 let roundCounter = 0;
 
+let artilleryRate = 5000;
+let artilleryAmount = 1;
+let artilleryExplodeIndex = 0;
+let artilleryRoundCounter = 0;
+
 var currentEnemySmallDamage;
 let chanceToFire = 10;
 let bulletIndex = 0;
@@ -196,7 +201,7 @@ function startGame() {
     gameOn = true;
     displayPlayer();
     toggleGUI();
-    currentEnemySmallDamage = 0.2 * totalRounds / 4;
+    currentEnemySmallDamage = 0.2 * totalRounds / 4 + 1;
 
     var numberOfEnemies;
     if (totalRounds <= maxEnemies - 1) {
@@ -207,6 +212,8 @@ function startGame() {
     }
     enemiesLeft = numberOfEnemies;
     displayEnemy(numberOfEnemies);
+    roundCounter++;
+    artilleryRoundCounter++;
 
 
     sensor1 = setInterval(function () {
@@ -245,6 +252,15 @@ function startGame() {
 
             if (roundCounter == 2) {
                 totalRounds++;
+                
+                artilleryRoundCounter++;
+                if(artilleryRoundCounter == 10){
+                    artilleryRoundCounter = 0;
+                    if(artilleryAmount < 10){
+                        artilleryAmount++;
+                    }
+                   
+                }
                 enemiesLeft = numberOfEnemies;
                 currentEnemySmallDamage = 0.2 * totalRounds / 3;
                 // console.log(roundCounter);
@@ -275,6 +291,16 @@ function startGame() {
                     totalRounds++;
                     roundCounter++;
 
+                    artilleryRoundCounter++;
+
+                    if(artilleryRoundCounter == 10){
+                        artilleryRoundCounter = 0;
+                        if(artilleryAmount < 10){
+                            artilleryAmount++;
+                        }
+                    
+                    }
+
                     if (numberOfEnemies < maxEnemies) {
                         numberOfEnemies = totalRounds + 1;
 
@@ -294,14 +320,23 @@ function startGame() {
 
         }
     }, 1000);
+
+    sensor4 = setInterval(function(){
+        fireArtillery();
+    },artilleryRate)
+}
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 function updateGUI() {
     if (gameOn == true) {
         // update each of the stats in the gui with new data
-        $(".healthBar p").text(playerShip.health);
+        $(".healthNumbers").text(playerShip.health.toFixed(2) + "/" + maximumHP.toFixed(2));
+        
+        $(".currentHP").css("width", ( document.getElementsByClassName("healthBar")[0].offsetWidth * playerShip.health / maximumHP) + "px");
         $(".round").text("Round: " + totalRounds);
-        $(".score").text("Score: " + Math.floor(playerShip.score));
-        $(".scoreMultiplier").text(Math.floor(playerShip.scoreMultiplier));
+        $(".score").text("Score: " + numberWithCommas(Math.floor(playerShip.score)));
+        $(".scoreMultiplier").text("x" + Math.floor(playerShip.scoreMultiplier));
 
         $(".bossHP").css("width", (400 * boss.health / currentBossHP) + "px")
 
@@ -309,6 +344,8 @@ function updateGUI() {
         $(".playerHP").css("top", (playerLocation.top + playerLocation.height + 10) + "px");
         $(".playerHP").css("left", (playerLocation.left) + "px");
         $(".playerHP").css("width", (playerLocation.width * playerShip.health / maximumHP) + "px");
+
+
     }
 
 
@@ -496,8 +533,9 @@ function fireSecondary() {
 
 
             playerShip.secondary = false;
+            $(".secondaryCooldown").addClass("inactive");
 
-            setTimeout(function () { playerShip.secondary = true; }, 10000);
+            setTimeout(function () { playerShip.secondary = true;$(".secondaryCooldown").removeClass("inactive"); }, 10000);
         }
 
 
@@ -536,16 +574,21 @@ function fireTertiary() {
         primaryBossDamage++;
         changePrimaryCooldown();
         playerShip.tertiary = false;
+        $(".tertiaryCooldown").addClass("inactive");
+        setTimeout(function () { playerShip.tertiary = true;$(".tertiaryCooldown").removeClass("inactive"); }, 20000);
         setTimeout(function () {
+
+            $(".primaryCooldown").addClass("inactive");
             primaryBossDamage--;
             primaryCooldown = 500;
             changePrimaryCooldown();
 
             setTimeout(function () {
                 primaryCooldown = 100;
+                $(".primaryCooldown").removeClass("inactive");
                 changePrimaryCooldown();
 
-                setTimeout(function () { playerShip.tertiary = true; }, 20000);
+                
             }, 5000);
         }, 10000);
 
@@ -1107,8 +1150,21 @@ function checkPlayerHit() {
 
     for (let i = 0; i < enemyProjectiles.length; i++) {
         let projectileBox = enemyProjectiles[i].getBoundingClientRect();
-
-        if (projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width / 3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width / 3) {
+        if(enemyProjectiles[i].classList.contains("artilleryExplode")){
+            if (playerBox.left >= projectileBox.left + projectileBox.width || playerBox.top >= projectileBox.top + projectileBox.height ||
+                playerBox.left + playerBox.width <= projectileBox.left || playerBox.top + playerBox.height <= projectileBox.top) {
+                // no overlap
+            }
+            else{
+                console.log("you have been hit");
+                primaryHit(projectileBox);
+                enemyProjectiles[i].remove();
+                playerShip.health -= currentEnemySmallDamage/2;
+                playerShip.scoreMultiplier = playerShip.scoreMultiplier / 4;
+                console.log(playerShip.health);
+            }
+        }
+        else if (projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width / 3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width / 3) {
             console.log("you have been hit");
             primaryHit(projectileBox);
             enemyProjectiles[i].remove();
@@ -1127,9 +1183,48 @@ function checkPlayerHit() {
 }
 // ************************************************************************************************************************************************
 // ************************************************************************************************************************************************
-//                                           Enemy Shots, Apply Health to enemies
+//                                           Enemy Shots, Apply Health to enemies, fireArtillery
 // ************************************************************************************************************************************************
 // ************************************************************************************************************************************************
+function fireArtillery(){
+    let playerShip = document.getElementsByClassName("playerShip")[0];
+    
+    let gameArena = document.getElementsByClassName("playingField")[0];
+
+
+    let repeatArtillery = setInterval(function(){
+        let playerShipBox = playerShip.getBoundingClientRect();
+        let artillery = document.createElement("div");
+        artillery.classList.add("artilleryIndicator");
+        artillery.classList.add("enemyProjectile");
+        artillery.style.top = playerShipBox.top - 100 + Math.random()*(200 + playerShipBox.height) + "px";
+        artillery.style.left = playerShipBox.left - 100 + Math.random()*(200 + playerShipBox.width) + "px";
+
+        let artilleryY = artillery.style.top;
+        let artilleryX = artillery.style.left;
+
+        gameArena.appendChild(artillery);
+
+        setTimeout(function(){
+            artillery.classList.remove("artilleryIndicator");
+            artillery.classList.add("artilleryExplode");
+            artillery.classList.add("artilleryexplode" + artilleryExplodeIndex);
+            artillery.style.top = artilleryY + "px";
+            artillery.style.left = artilleryX + "px";
+            $(".artilleryexplode" + artilleryExplodeIndex).animate({opacity: "0.01" },{duration:300 , queue: false, complete: function(){
+                artillery.remove()
+            }});
+        },1000);
+        
+    }, 300);
+
+    setTimeout(function(){
+        clearInterval(repeatArtillery);
+    },300*artilleryAmount);
+
+
+}
+
 function enemyShots() {
 
 
@@ -1278,7 +1373,7 @@ function enemyShots() {
                     $(".bossbullet" + bossBulletIndex).animate({ left:  Math.random() * (window.innerWidth) + "px" }, { duration: duration, queue: false ,complete: function(){
                         console.log("testing 1");
                         
-                        $(".bossbullet" + bossRainIndex).animate({ top:  window.innerHeight + "px" }, { duration: duration, queue: false });
+                        $(".bossbullet" + bossRainIndex).animate({ top:  ( window.innerHeight + 100 )+ "px" }, { duration: duration, queue: false });
                         
                         
                         
@@ -1288,7 +1383,7 @@ function enemyShots() {
                     setTimeout(function () {
                             
                         bossBullet.remove();
-                    }, duration*2);
+                    }, duration*3);
                     bossBulletIndex++;
                   
 
@@ -1572,6 +1667,12 @@ $(".returnMenu").click(function () {
 
 
 });
+$(".controlButton").click(function(){
+    $(".controls").slideToggle();
+})
+$(".objectivesButton").click(function(){
+    $(".objectives").slideToggle();
+})
 function toggleDeathScreen() {
     $(".scoreDeath").text("Score: " + playerShip.score);
     $(".roundDeath").text("Rounds Beaten: " + totalRounds);
