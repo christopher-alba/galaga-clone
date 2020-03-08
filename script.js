@@ -53,6 +53,7 @@ let healthScaling = 1;
 var sensor1;
 var sensor2;
 var sensor3;
+var sensor4;
 
 let moveVel = 10;
 var moveLeft;
@@ -74,6 +75,9 @@ var playerShip = {
     primary: true,
     secondary: true,
     tertiary: true,
+    primaryON: true,
+    secondaryON: true,
+    tertiaryON: true,
     ultimateShield: true,
     ultimateSword: true,
     damageAbsorbed: 0,
@@ -132,6 +136,7 @@ function endGame() {
     clearInterval(sensor1);
     clearInterval(sensor2);
     clearInterval(sensor3);
+    clearInterval(sensor4);
     clearInterval(moveLeft);
     clearInterval(moveRight);
     clearInterval(moveUp);
@@ -145,97 +150,7 @@ function endGame() {
     resetStats();
 }
 
-function resetStats() {
-    // global variables
- 
-// global variables
-     enemyID = 0;
-    enemies = [];
-    enemiesLeft;
-     maxEnemies = 25;
-    totalRounds = 0;
-    roundCounter = 0;
 
-    artilleryRate = 5000;
-    artilleryAmount = 1;
-    artilleryExplodeIndex = 0;
-    artilleryRoundCounter = 0;
-
-    currentEnemySmallDamage;
-    chanceToFire = 10;
-    bulletIndex = 0;
-
-
-    currentBossHP = 20;
-    bossBulletIndex = 0;
-    bossRainIndex = 0;
-
-    bossShotCounter0 = 0;
-    bossShotMultiple0 = 1;
-
-    bossShotCounter1 = 0;
-    bossShotMultiple1 = 1;
-
-    bossShotCounter2 = 0;
-    bossShotMultiple2 = 1;
-
-    primaryRepeat;
-    primaryIndex = 0;
-    primaryExplodeIndex = 0;
-    primaryOn = false;
-    primaryCooldown = 100;
-    primaryBossDamage = 1;
-
-    secondaryIndex = 0;
-    secondaryExplodeIndex = 0;
-    secondaryRockets = 6;
-    secondaryHitIndex = 0;
-
-    playerShield = false;
-
-    gameOn = false;
-    enemyHealth = 1;
-    maximumHP = 20;
-    healthScaling = 1;
-
-
-
-
-
-
-
-    upCount = 0;
-    downCount = 0;
-    leftCount = 0;
-    rightCount = 0;
-// Objects
-    playerShip = {
-    health: maximumHP,
-    experience: 0,
-    powerups: {
-
-    },
-    primary: true,
-    secondary: true,
-    tertiary: true,
-    ultimateShield: true,
-    ultimateSword: true,
-    primaryDamage: 1,
-    secondaryDamage: 0.1 * Math.pow(1.3, totalRounds / 3),
-    tertiaryDamage: 16,
-    ultimateDamage: 10,
-    score: 0,
-    scoreMultiplier: 0
-
-
-}
-
-    boss = {
-    health: 20,
-    spawned: false,
-}
-
-}
 function startGame() {
     gameOn = true;
     displayPlayer();
@@ -407,7 +322,7 @@ function toggleGUI() {
 // ************************************************************************************************************************************************
 function firePrimary() {
 
-    if (primaryOn == false && playerShip.primary == true) {
+    if (primaryOn == false && playerShip.primary == true && playerShip.primaryON == true) {
         primaryOn = true;
 
         primaryRepeat = setInterval(function () {
@@ -449,7 +364,7 @@ function stopPrimary() {
     primaryOn = false;
 }
 function fireSecondary() {
-    if (playerShip.secondary == true) {
+    if (playerShip.secondary == true && playerShip.secondaryON == true) {
         //console.log("firing secondary");
         //fire secondary
         let playerShipBox = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
@@ -562,7 +477,14 @@ function fireSecondary() {
             playerShip.secondary = false;
             $(".secondaryCooldown").addClass("inactive");
 
-            setTimeout(function () { playerShip.secondary = true;$(".secondaryCooldown").removeClass("inactive"); }, 10000);
+            setTimeout(function () { 
+                playerShip.secondary = true;
+                if(playerShip.secondaryON == true){
+                    
+                    $(".secondaryCooldown").removeClass("inactive");
+                }
+          
+            }, 10000);
         }
 
 
@@ -593,13 +515,15 @@ function changePrimaryCooldown() {
     firePrimary();
 }
 function fireTertiary() {
-    if (playerShip.tertiary == true) {
+    if (playerShip.tertiary == true && playerShip.tertiaryON == true) {
         //console.log("firing tertiary");
         //fire tertiary
 
         primaryCooldown = 10;
         primaryBossDamage++;
-        changePrimaryCooldown();
+        if(playerShip.primaryON == true){
+            changePrimaryCooldown();
+        }
         playerShip.tertiary = false;
         $(".tertiaryCooldown").addClass("inactive");
         setTimeout(function () { playerShip.tertiary = true;$(".tertiaryCooldown").removeClass("inactive"); }, 20000);
@@ -608,12 +532,19 @@ function fireTertiary() {
             $(".primaryCooldown").addClass("inactive");
             primaryBossDamage--;
             primaryCooldown = 500;
-            changePrimaryCooldown();
+            if(playerShip.primaryON == true){
+                changePrimaryCooldown();
+            }
+       
 
             setTimeout(function () {
                 primaryCooldown = 100;
-                $(".primaryCooldown").removeClass("inactive");
-                changePrimaryCooldown();
+                if(playerShip.primaryON == true){
+                    $(".primaryCooldown").removeClass("inactive");
+                    changePrimaryCooldown();
+                }
+               
+                
 
                 
             }, 5000);
@@ -659,9 +590,10 @@ function fireUltimate() {
         playerShip.ultimateSword = false;
 
         // deactivate primary secondary and tertiary weapons
-        playerShip.primary = false;
-        playerShip.secondary = false;
-        playerShip.tertiary = false;
+        playerShip.primaryON = false;
+        playerShip.secondaryON = false;
+        playerShip.tertiaryON = false;
+        clearInterval(primaryRepeat);
 
         $(".primaryCooldown").addClass("inactive");
         $(".secondaryCooldown").addClass("inactive");
@@ -677,9 +609,9 @@ function fireUltimate() {
         setTimeout(function(){
 
             laser.remove();
-            playerShip.primary = true;
-            playerShip.secondary = true;
-            playerShip.tertiary = true;
+            playerShip.primaryON = true;
+            playerShip.secondaryON = true;
+            playerShip.tertiaryON = true;
             
     
             $(".primaryCooldown").removeClass("inactive");
@@ -1863,11 +1795,11 @@ $(".startButton").click(function () {
 $(".restartButton").click(function () {
 
     toggleDeathScreen();
-    setTimeout(function () { startGame(); }, 1000);
+    location.reload();
 });
 $(".returnMenu").click(function () {
     toggleDeathScreen();
-    $(".mainMenu").slideToggle(1000);
+    location.reload();
 
 
 });
