@@ -216,7 +216,7 @@ function startGame() {
                    
                 }
                 enemiesLeft = numberOfEnemies;
-                currentEnemySmallDamage = 0.2 * totalRounds / 3;
+                currentEnemySmallDamage = 0.2 * totalRounds / 3 + 1;
                 // console.log(roundCounter);
 
                 roundCounter++;
