@@ -632,6 +632,7 @@ function fireUltimate() {
         //console.log("firing ultimate");
         //activate shield
         playerShip.ultimateShield = false;
+        playerShip.damageAbsorbed = 0;
         $(".ultimateShieldCooldown").addClass("inactive");
         
         let shield = document.createElement("div");
@@ -643,6 +644,7 @@ function fireUltimate() {
         
         playerShield = true;
         setTimeout(function(){
+            
             deactivatePlayerShield();
             
         },10000);
@@ -690,7 +692,8 @@ function fireUltimate() {
 }
 function deactivatePlayerShield(){
     playerShield = false;
-    playerShip.damageAbsorbed = 0;
+    
+    
     $(".playerShield").remove();
 }
 function updateShieldPos(shield){
