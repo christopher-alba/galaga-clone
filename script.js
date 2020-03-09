@@ -36,6 +36,8 @@ let primaryExplodeIndex = 0;
 let primaryOn = false;
 let primaryCooldown = 100;
 let primaryBossDamage = 1;
+let primaryAmount = 1;
+let primarySize = 1;
 
 let secondaryIndex = 0;
 let secondaryExplodeIndex = 0;
@@ -147,7 +149,6 @@ function endGame() {
     toggleDeathScreen();
 
     gameOn = false;
-    resetStats();
 }
 
 
@@ -325,28 +326,40 @@ function firePrimary() {
     if (primaryOn == false && playerShip.primary == true && playerShip.primaryON == true) {
         primaryOn = true;
 
+        
+
         primaryRepeat = setInterval(function () {
             //console.log("firing primary");
-            var primary = document.createElement("div");
+            let primaryPosition = 1;
+            for(let i = 0; i < primaryAmount; i++){
+                let primary = document.createElement("div");
 
-            primary.classList.add("primary");
-            primary.classList.add("primary" + primaryIndex);
-
-            let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
-
-            primary.style.position = "absolute";
-
-            primary.style.top = (ship.top) + "px";
-            primary.style.left = (ship.left + 75 / 2) + "px";
-
-            var gameArena = document.getElementsByClassName("playingField")[0];
-
-            gameArena.appendChild(primary);
-
-            $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false });
-            primaryIndex++;
-
-            setTimeout(function () { primary.remove(); }, 500);
+                primary.classList.add("primary");
+                primary.classList.add("primary" + primaryIndex);
+                primary.style.height = 20*primarySize + "px";
+                primary.style.width = 5*primarySize + "px";
+    
+                let ship = document.getElementsByClassName("playerShip")[0].getBoundingClientRect();
+    
+                primary.style.position = "absolute";
+    
+                primary.style.top = (ship.top) + "px";
+                console.log( );
+                
+                primary.style.left = (ship.left + primaryPosition*ship.width/(primaryAmount + 1) - parseInt(primary.style.width,10)/2 ) + "px";
+                primaryPosition++;
+               
+               
+                var gameArena = document.getElementsByClassName("playingField")[0];
+    
+                gameArena.appendChild(primary);
+    
+                $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false, complete: function(){
+                    primary.remove();
+                } });
+                primaryIndex++;
+            }
+            
 
         }, primaryCooldown);
     }
@@ -1211,23 +1224,26 @@ function checkEnemyHit() {
     if(ultimateLaser != undefined){
         for(let i = 0; i < enemies.length; i++){
             let enemyShip = enemies[i].reference;
-            let enemyShipBox = enemyShip.getBoundingClientRect();
-            let ultimateLaserBox = ultimateLaser.getBoundingClientRect();
-    
-            if(enemyShipBox.left >= ultimateLaserBox.left + ultimateLaserBox.width || enemyShipBox.top >= ultimateLaserBox.top + ultimateLaserBox.height ||
-                enemyShipBox.left + enemyShipBox.width <= ultimateLaserBox.left || enemyShipBox.top + enemyShipBox.height <= ultimateLaserBox.top){
-                    // enemy not hit
-            }
-            else{
-                enemies[i].health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
-                ultimateHit(enemyShipBox);
-                if(enemies[i].health <= 0 ){
-                    console.log("testingSMALL");
-                    
-                    smallEnemyDeath(enemyShip);
-                    enemies[i].reference = "empty";
+            if(enemyShip != "empty"){
+                let enemyShipBox = enemyShip.getBoundingClientRect();
+                let ultimateLaserBox = ultimateLaser.getBoundingClientRect();
+        
+                if(enemyShipBox.left >= ultimateLaserBox.left + ultimateLaserBox.width || enemyShipBox.top >= ultimateLaserBox.top + ultimateLaserBox.height ||
+                    enemyShipBox.left + enemyShipBox.width <= ultimateLaserBox.left || enemyShipBox.top + enemyShipBox.height <= ultimateLaserBox.top){
+                        // enemy not hit
+                }
+                else{
+                    enemies[i].health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
+                    ultimateHit(enemyShipBox);
+                    if(enemies[i].health <= 0 ){
+                        console.log("testingSMALL");
+                        
+                        smallEnemyDeath(enemyShip);
+                        enemies[i].reference = "empty";
+                    }
                 }
             }
+           
     
             
         }
