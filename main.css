@@ -17,6 +17,10 @@
 .deathScreen{
     display:none;
 }
+.scoreDeath, .roundDeath, .returnMenu{
+    padding:20px;
+    font-size:3rem;
+}
 .menuImg{
     width:80%;
 }
