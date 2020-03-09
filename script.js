@@ -483,9 +483,8 @@ function upgradeAbility(ability){
             if(qLevel < 3){
                 primaryAmount++;
             }
-            else if(qLevel < 10){
+            else if(qLevel < 9){
                 primarySize += 0.2;
-                playerShip.primaryDamage*=1.4;
             }
         }
         qLevel++;
@@ -527,6 +526,7 @@ function upgradeAbility(ability){
     }
     if(ability == "r1"){
         if(r1Level < 1){
+            
             playerShip.ultimateShield = true;
             $(".r1").css("display" , "flex");
         }
@@ -539,13 +539,22 @@ function upgradeAbility(ability){
     }
     if(ability == "r2"){
         if(r2Level < 1){
-            playerShip.ultimateSword = true;
-            $(".r2").css("display" , "flex");
+            if(r1Level < 1){
+                playerShip.ultimateShield = true;
+                $(".r1").css("display" , "flex");
+                r1Level++;
+            }
+            else{
+                playerShip.ultimateSword = true;
+                $(".r2").css("display" , "flex");
+                r2Level++;
+            }
         }
         else{
             ultimateSwordDuration += 1000;
+            r2Level++;
         }
-        r2Level++;
+        
         $(".r2 .level p").text(r2Level);
     }
     
@@ -865,10 +874,16 @@ function fireUltimate() {
             playerShip.secondaryON = true;
             playerShip.tertiaryON = true;
             
-    
+            
             $(".primaryCooldown").removeClass("inactive");
-            $(".secondaryCooldown").removeClass("inactive");
-            $(".tertiaryCooldown").removeClass("inactive");
+            if(playerShip.secondary == true){
+
+                $(".secondaryCooldown").removeClass("inactive")
+            }
+            else if(playerShip.tertiary == true){
+                $(".tertiaryCooldown").removeClass("inactive");
+            }
+          
 
         },ultimateSwordDuration);
         setTimeout(function () { playerShip.ultimateSword = true; $(".ultimateSwordCooldown").removeClass("inactive");}, 60000);
@@ -1134,6 +1149,12 @@ function displayEnemy(numberOfEnemies) {
 function bossDeath(enemyBossBox, enemyBoss) {
     
     enemyBoss.remove();
+
+    
+    spawnPowerUp("attack",enemyBossBox);
+    
+
+
     let gameArena = document.getElementsByClassName("playingField")[0];
     let enemyScore = document.createElement("div");
     enemyScore.classList.add("largeScore");
@@ -1177,7 +1198,7 @@ function smallEnemyDeath(enemyShip) {
         enemyShip.remove();
         if (enemyShip != "empty") {
 
-            let chance = Math.floor(Math.random()*15);
+            let chance = Math.floor(Math.random()*100);
             if(chance == 0){
                 spawnPowerUp("attack",enemyShipBox);
             }
@@ -1334,9 +1355,18 @@ function checkEnemyHit() {
                 enemyBossBox = enemyBoss.getBoundingClientRect();
                 if (bulletBox.top < enemyBossBox.top + enemyBossBox.height && bulletBox.left > enemyBossBox.left && bulletBox.right < enemyBossBox.right) {
                     //console.log("enemy boss hit");
-                    bullet.remove();
+                    if(qLevel < 10){
+                        bullet.remove();
+                    }
+                   
                     primaryHit(bulletBox);
-                    addHealth(0.2);
+                    if(qLevel >= 5){
+                        addHealth(0.2);
+                    }
+                    else if(qLevel >= 4){
+                        addHealth(0.1);
+                    }
+                   
                     boss.health -= primaryBossDamage;
 
 
@@ -1350,7 +1380,7 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple0 = 1;
                         }
-                        spawnPowerUp("attack",enemyBossBox);
+                        
                     }
                     if(enemyBoss.src.indexOf("boss1") != -1 ){
                         if (bossShotMultiple1 >= 3) {
@@ -1359,7 +1389,7 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple1 = 1;
                         }
-                        spawnPowerUp("attack",enemyBossBox);
+                      
                     }
                     if(enemyBoss.src.indexOf("boss2") != -1 ){
                         if (bossShotMultiple2 >= 3) {
@@ -1368,7 +1398,7 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple2 = 1;
                         }
-                        spawnPowerUp("sustain",enemyBossBox);
+                        
                     }
                     
                     
@@ -1394,8 +1424,25 @@ function checkEnemyHit() {
                 if (bulletBox.top < enemyShipBox.top + enemyShipBox.height && bulletBox.top + bulletBox.height > enemyShipBox.top && bulletBox.left > enemyShipBox.left && bulletBox.right < enemyShipBox.right) {
                     //console.log("enemy ship hit");
                     enemies[j].health -= playerShip.primaryDamage;
-                    addHealth(0.2);
-                    bullet.remove();
+
+                    if(qLevel >= 9){
+                        addHealth(0.1);
+                    }
+                    else if(qLevel >= 8){
+                        addHealth(0.15);
+                    }
+                    else if(qLevel >=7){
+                        addHealth(0.10);
+                    }
+                    else if(qLevel >=6){
+                        addHealth(0.05);
+                    }
+                  
+
+                    if(qLevel < 10){
+                        bullet.remove();
+                    }
+                   
                     primaryHit(bulletBox);
 
                 }
@@ -1481,7 +1528,7 @@ function checkEnemyHit() {
                         // enemy not hit
                 }
                 else{
-                    enemies[i].health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
+                    enemies[i].health -= playerShip.damageAbsorbed/10 + 1;
                     ultimateHit(enemyShipBox);
                     if(enemies[i].health <= 0 ){
                         // console.log("testingSMALL");
@@ -1507,7 +1554,7 @@ function checkEnemyHit() {
             }
             else{
                 // console.log(boss.health);
-                boss.health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
+                boss.health -= playerShip.damageAbsorbed/10 + 1;
                 // console.log(playerShip.damageAbsorbed);
                 // console.log(boss.health);
                 
@@ -1561,7 +1608,7 @@ function checkPlayerHit() {
                 enemyProjectiles[i].remove();
                 playerShip.health -= currentEnemySmallDamage/2;
                 playerShip.scoreMultiplier = playerShip.scoreMultiplier / 4;
-                console.log(playerShip.health);
+                // console.log(playerShip.health);
             }
         }
         else if (projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width / 3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width / 3) {
@@ -1769,21 +1816,10 @@ function enemyShots() {
                 }
                 else if (boss.src.indexOf("boss2") != -1){
                     bossBullet.classList.add("bossbullet" + bossRainIndex);
-                    $(".bossbullet" + bossBulletIndex).animate({ top:  Math.random() * (bossBox.top) + "px" }, { duration: duration, queue: false });
-                    $(".bossbullet" + bossBulletIndex).animate({ left:  Math.random() * (window.innerWidth) + "px" }, { duration: duration, queue: false ,complete: function(){
-                        // console.log("testing 1");
-                        
-                        $(".bossbullet" + bossRainIndex).animate({ top:  ( window.innerHeight + 100 )+ "px" }, { duration: duration, queue: false, complete: function(){
-
-                            bossBullet.remove();
-
-                        } });
-                        
-                        
-                        
-
-                        
-                    }});
+                    $(".bossbullet" + bossBulletIndex).animate({ top:  window.innerHeight + "px" }, { duration: duration, queue: false, complete:function(){
+                        bossBullet.remove();
+                    } });
+                 
                    
                     bossBulletIndex++;
                   
@@ -1941,6 +1977,7 @@ function moveShip(keyPressed) {
 
 
                     leftCount++;
+                    
                     moveLeft = setInterval(function () {
                         $(".playerShip").animate({ left: '-=' + moveVel + 'px' }, { duration: 10, queue: false });
                     }, 10)
