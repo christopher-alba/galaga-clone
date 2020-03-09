@@ -48,6 +48,7 @@ let primaryCooldown = 100;
 let primaryBossDamage = 1;
 let primaryAmount = 1;
 let primarySize = 1;
+let primarySpeed = 500;
 
 let secondaryIndex = 0;
 let secondaryExplodeIndex = 0;
@@ -602,7 +603,7 @@ function firePrimary() {
     
                 gameArena.appendChild(primary);
     
-                $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: 500, queue: false, complete: function(){
+                $(".primary" + primaryIndex).animate({ top: "0px" }, { duration: primarySpeed, queue: false, complete: function(){
                     primary.remove();
                 } });
                 primaryIndex++;
@@ -781,18 +782,23 @@ function fireTertiary() {
         //fire tertiary
 
         primaryCooldown = 10;
+        primarySpeed = 100;
         primaryBossDamage++;
         if(playerShip.primaryON == true){
             changePrimaryCooldown();
         }
         playerShip.tertiary = false;
         $(".tertiaryCooldown").addClass("inactive");
-        setTimeout(function () { playerShip.tertiary = true;$(".tertiaryCooldown").removeClass("inactive"); }, 20000);
+        setTimeout(function () {
+             playerShip.tertiary = true;
+             $(".tertiaryCooldown").removeClass("inactive"); 
+            }, 20000);
         setTimeout(function () {
 
             $(".primaryCooldown").addClass("inactive");
             primaryBossDamage--;
             primaryCooldown = 500;
+            primarySpeed = 500;
             if(playerShip.primaryON == true){
                 changePrimaryCooldown();
             }
@@ -880,7 +886,7 @@ function fireUltimate() {
 
                 $(".secondaryCooldown").removeClass("inactive")
             }
-            else if(playerShip.tertiary == true){
+            if(playerShip.tertiary == true){
                 $(".tertiaryCooldown").removeClass("inactive");
             }
           
@@ -1203,7 +1209,7 @@ function smallEnemyDeath(enemyShip) {
                 spawnPowerUp("attack",enemyShipBox);
             }
             
-            addHealth(0.2);
+            addHealth(0.5);
 
             // console.log(playerShip.health);
 
