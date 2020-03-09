@@ -2125,7 +2125,7 @@ $(".objectivesButton").click(function(){
     $(".objectives").slideToggle();
 })
 function toggleDeathScreen() {
-    $(".scoreDeath").text("Score: " + playerShip.score);
+    $(".scoreDeath").text("Score: " + Math.floor(playerShip.score));
     $(".roundDeath").text("Rounds Beaten: " + totalRounds);
     $(".deathScreen").toggle(500);
 
