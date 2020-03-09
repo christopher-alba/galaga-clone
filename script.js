@@ -30,6 +30,16 @@ var bossShotMultiple1 = 1;
 let bossShotCounter2 = 0;
 var bossShotMultiple2 = 1;
 
+let powerUps = [];
+let powerUpIndex = 0;
+
+let qLevel = 1;
+let wLevel = 0;
+let eLevel = 0;
+let r1Level = 0;
+let r2Level = 0;
+
+
 var primaryRepeat;
 let primaryIndex = 0;
 let primaryExplodeIndex = 0;
@@ -41,10 +51,14 @@ let primarySize = 1;
 
 let secondaryIndex = 0;
 let secondaryExplodeIndex = 0;
-let secondaryRockets = 6;
+let secondaryRockets = 1;
 let secondaryHitIndex = 0;
 
+let tertiaryDuration = 5000;
+
 let playerShield = false;
+ultimateShieldDuration = 5000;
+ultimateSwordDuration = 5000;
 ultimateHitIndex = 0;
 
 let gameOn = false;
@@ -75,13 +89,13 @@ var playerShip = {
 
     },
     primary: true,
-    secondary: true,
-    tertiary: true,
+    secondary: false,
+    tertiary: false,
     primaryON: true,
     secondaryON: true,
     tertiaryON: true,
-    ultimateShield: true,
-    ultimateSword: true,
+    ultimateShield: false,
+    ultimateSword: false,
     damageAbsorbed: 0,
     primaryDamage: 1,
     secondaryDamage: 0.1 * Math.pow(1.3, totalRounds / 3),
@@ -179,7 +193,8 @@ function startGame() {
             checkPlayerHit();
             updateGUI();
             checkBounds();
-
+            checkPlayerCollect();
+            deletePowerUps();
 
         }
 
@@ -225,12 +240,12 @@ function startGame() {
                 displayBoss();
                 // displayEnemy(numberOfEnemies);
                 boss.spawned = true;
-                console.log(boss.health);
+                // console.log(boss.health);
 
 
                 playerShip.secondaryDamage = 0.1 * Math.pow(1.3, totalRounds / 3);
                 maximumHP += 1;
-                console.log(maximumHP);
+                // console.log(maximumHP);
 
 
 
@@ -315,6 +330,230 @@ function updateGUI() {
 function toggleGUI() {
     $(".playerGUI").toggle(500);
 }
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
+//                                                             Power Ups
+// ************************************************************************************************************************************************
+// ************************************************************************************************************************************************
+function spawnPowerUp(abilityType,enemyShipBox){
+
+    let powerUpImage = document.createElement("div");
+    let gameArena = document.getElementsByClassName("playingField")[0];
+    
+    powerUpImage.classList.add("powerUp");
+    powerUpImage.classList.add("powerup" + powerUpIndex);
+
+    if(abilityType == "attack"){
+        powerUpImage.classList.add("attack");
+
+    }
+    else if(abilityType == "sustain"){
+        powerUpImage.classList.add("sustain");
+    }
+    else{
+        powerUpImage.classList.add("defense");
+    }
+
+    powerUpImage.style.top = enemyShipBox.top + "px";
+    powerUpImage.style.left = enemyShipBox.left + "px";
+
+    gameArena.appendChild(powerUpImage);
+
+    
+    
+    let reference = powerUpImage;
+
+    var powerUpObject = new PowerUp(abilityType , reference);
+
+    powerUps.push(powerUpObject);
+    
+    $(".powerup" + powerUpIndex).animate({top: window.innerHeight + "px"},{duration: 5000, queue: false, complete: function(){
+        powerUpImage.remove();
+    }})
+    powerUpIndex++;
+}
+
+function PowerUp(abilityType , reference){
+    this.abilityType = abilityType;
+    this.reference = reference;
+}
+function deletePowerUps(){
+
+    // if the reference of a power up cant be found in the document remove it
+    for(let i = 0; i < powerUps.length; i++){
+
+        let powerUpimages = $(".powerUp");
+        for(let j = 0; j < powerUpimages.length; j++){
+
+            if(powerUps[i].reference == powerUpimages[j]){
+                j = powerUpimages.length;
+            }
+            else if(j == powerUpimages.length - 1){
+                powerUps.splice(i,1);
+            }
+
+        }
+    }
+
+}
+function checkPlayerCollect(){
+    let playerShip = document.getElementsByClassName("playerShip")[0];
+    
+    if(playerShip != undefined){
+        let playerShipBox = playerShip.getBoundingClientRect();
+
+
+        for( i = 0; i < powerUps.length; i++){
+            let powerUp = powerUps[i];
+    
+            if(powerUp.reference != "empty"){
+    
+                let powerUpRef = powerUp.reference;
+                let powerUpBox = powerUpRef.getBoundingClientRect();
+                
+                
+                if(playerShipBox.left >= powerUpBox.left + powerUpBox.width || playerShipBox.top >= powerUpBox.top + powerUpBox.height ||
+                    playerShipBox.left + playerShipBox.width <= powerUpBox.left || playerShipBox.top + playerShipBox.height <= powerUpBox.top){
+                        // nothing happens
+                }
+                else{
+                    if(powerUp.abilityType == "attack"){
+                        // console.log("upgrading attack");
+                        let chance = Math.floor(Math.random()*5);
+                        switch(chance){
+                            case 0:
+                                if(qLevel < 10){
+                                    
+                                    upgradeAbility("q");
+                                }
+                                break;
+                            case 1:
+                                if(wLevel < 10){
+                                    upgradeAbility("w");
+                                }
+                                break;
+                            case 2:
+                                if(eLevel < 10){
+                                    upgradeAbility("e");
+                                }
+                                break;
+                            case 3:
+                                if(r1Level < 10){
+                                    upgradeAbility("r1");
+                                }
+                                break;
+                            case 4:
+                                if(r2Level < 10){
+                                    upgradeAbility("r2");
+                                }
+                                break;
+    
+                        }
+                        
+                    }
+                    else if(powerUp.abilityType == "sustain"){
+                        // console.log("upgrading sustain");
+                    }
+                    else{
+                        // defense
+                        // console.log("upgrading defense");
+                    }
+                    powerUpRef.remove();
+                    powerUps.splice(i,1);
+                    i--;
+                }
+                
+    
+            }
+    
+    
+    
+        }
+    }
+   
+}
+
+function upgradeAbility(ability){
+
+    if(ability == "q"){
+        if(qLevel < 1){
+            playerShip.primary = true;
+        }
+        else{
+            if(qLevel < 3){
+                primaryAmount++;
+            }
+            else if(qLevel < 10){
+                primarySize += 0.2;
+                playerShip.primaryDamage*=1.4;
+            }
+        }
+        qLevel++;
+        $(".q .level p").text(qLevel);
+     
+        
+    }
+    if(ability == "w"){
+        if(wLevel < 1){
+
+            
+            playerShip.secondary = true;
+            // console.log("w unlocked");
+            $(".w").css("display" , "flex");
+            
+        }
+        else{
+            secondaryRockets++;
+            // console.log("w leveled up");
+        }
+        wLevel++;
+        $(".w .level p").text(wLevel);
+        
+    }
+    if(ability == "e"){
+        if(eLevel < 1){
+            
+            playerShip.tertiary = true;
+            $(".e").css("display" , "flex");
+        }
+        else{
+
+            tertiaryDuration += 1000;
+
+        }
+        eLevel++;
+        $(".e .level p").text(eLevel);
+        
+    }
+    if(ability == "r1"){
+        if(r1Level < 1){
+            playerShip.ultimateShield = true;
+            $(".r1").css("display" , "flex");
+        }
+        else{
+            ultimateShieldDuration += 1000;
+        }
+        r1Level++;
+        $(".r1 .level p").text(r1Level);
+        
+    }
+    if(ability == "r2"){
+        if(r2Level < 1){
+            playerShip.ultimateSword = true;
+            $(".r2").css("display" , "flex");
+        }
+        else{
+            ultimateSwordDuration += 1000;
+        }
+        r2Level++;
+        $(".r2 .level p").text(r2Level);
+    }
+    
+}
+
+
+
+
 
 // ************************************************************************************************************************************************
 // ************************************************************************************************************************************************
@@ -344,7 +583,7 @@ function firePrimary() {
                 primary.style.position = "absolute";
     
                 primary.style.top = (ship.top) + "px";
-                console.log( );
+                // console.log( );
                 
                 primary.style.left = (ship.left + primaryPosition*ship.width/(primaryAmount + 1) - parseInt(primary.style.width,10)/2 ) + "px";
                 primaryPosition++;
@@ -388,7 +627,7 @@ function fireSecondary() {
         for (let i = 0; i < enemyShips.length; i++) {
             shipsArray[i] = enemyShips[i];
         }
-        console.log(enemyShips);
+        // console.log(enemyShips);
 
 
         if (enemyShips.length > 0) {
@@ -561,7 +800,7 @@ function fireTertiary() {
 
                 
             }, 5000);
-        }, 10000);
+        }, tertiaryDuration);
 
 
 
@@ -591,7 +830,7 @@ function fireUltimate() {
             
             deactivatePlayerShield();
             
-        },10000);
+        },ultimateShieldDuration);
         setTimeout(function () { playerShip.ultimateShield = true; $(".ultimateShieldCooldown").removeClass("inactive");}, 20000);
     }
     else if(playerShip.ultimateSword == true && playerShield == true){
@@ -631,7 +870,7 @@ function fireUltimate() {
             $(".secondaryCooldown").removeClass("inactive");
             $(".tertiaryCooldown").removeClass("inactive");
 
-        },10000);
+        },ultimateSwordDuration);
         setTimeout(function () { playerShip.ultimateSword = true; $(".ultimateSwordCooldown").removeClass("inactive");}, 60000);
     }
 }
@@ -938,9 +1177,14 @@ function smallEnemyDeath(enemyShip) {
         enemyShip.remove();
         if (enemyShip != "empty") {
 
+            let chance = Math.floor(Math.random()*15);
+            if(chance == 0){
+                spawnPowerUp("attack",enemyShipBox);
+            }
+            
             addHealth(0.2);
 
-            console.log(playerShip.health);
+            // console.log(playerShip.health);
 
             playerShip.scoreMultiplier += 1;
             playerShip.score += 100 * playerShip.scoreMultiplier;
@@ -975,7 +1219,7 @@ function smallEnemyDeath(enemyShip) {
             enemiesLeft--;
             
             
-            console.log("enemies left: " + enemiesLeft);
+            // console.log("enemies left: " + enemiesLeft);
 
         }
     }
@@ -1106,6 +1350,7 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple0 = 1;
                         }
+                        spawnPowerUp("attack",enemyBossBox);
                     }
                     if(enemyBoss.src.indexOf("boss1") != -1 ){
                         if (bossShotMultiple1 >= 3) {
@@ -1114,6 +1359,7 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple1 = 1;
                         }
+                        spawnPowerUp("attack",enemyBossBox);
                     }
                     if(enemyBoss.src.indexOf("boss2") != -1 ){
                         if (bossShotMultiple2 >= 3) {
@@ -1122,7 +1368,9 @@ function checkEnemyHit() {
                         else {
                             bossShotMultiple2 = 1;
                         }
+                        spawnPowerUp("sustain",enemyBossBox);
                     }
+                    
                     
                     bossDeath(enemyBossBox, enemyBoss);
                 }
@@ -1196,7 +1444,7 @@ function checkEnemyHit() {
 
             if (enemyBossBox.left >= secondaryExplodeBox.left + secondaryExplodeBox.width || enemyBossBox.top >= secondaryExplodeBox.top + secondaryExplodeBox.height ||
                 enemyBossBox.left + enemyBossBox.width <= secondaryExplodeBox.left || enemyBossBox.top + enemyBossBox.height <= secondaryExplodeBox.top) {
-                console.log("boss not hit");
+                // console.log("boss not hit");
 
             }
             else {
@@ -1209,7 +1457,7 @@ function checkEnemyHit() {
                 }
 
                 secondaryHit(enemyBossBox);
-                console.log("boss health: " + boss.health);
+                // console.log("boss health: " + boss.health);
                 if (boss.health <= 0) {
                     bossDeath(enemyBossBox, document.getElementsByClassName("boss")[0]);
                 }
@@ -1236,7 +1484,7 @@ function checkEnemyHit() {
                     enemies[i].health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
                     ultimateHit(enemyShipBox);
                     if(enemies[i].health <= 0 ){
-                        console.log("testingSMALL");
+                        // console.log("testingSMALL");
                         
                         smallEnemyDeath(enemyShip);
                         enemies[i].reference = "empty";
@@ -1258,15 +1506,15 @@ function checkEnemyHit() {
                     // enemy not hit
             }
             else{
-                console.log(boss.health);
+                // console.log(boss.health);
                 boss.health -= playerShip.damageAbsorbed*playerShip.damageAbsorbed + 1;
-                console.log(playerShip.damageAbsorbed);
-                console.log(boss.health);
+                // console.log(playerShip.damageAbsorbed);
+                // console.log(boss.health);
                 
                 
                 ultimateHit(enemyBossBox);
                 if(boss.health <= 0 ){
-                    console.log("testingBOSS");
+                    // console.log("testingBOSS");
                     
                     bossDeath(enemyBossBox,enemyBoss);
                 }
@@ -1308,7 +1556,7 @@ function checkPlayerHit() {
                 // no overlap
             }
             else{
-                console.log("you have been hit");
+                // console.log("you have been hit");
                 primaryHit(projectileBox);
                 enemyProjectiles[i].remove();
                 playerShip.health -= currentEnemySmallDamage/2;
@@ -1317,12 +1565,12 @@ function checkPlayerHit() {
             }
         }
         else if (projectileBox.top + projectileBox.height > playerBox.top && projectileBox.top < playerBox.top + playerBox.height && projectileBox.left > playerBox.left + playerBox.width / 3 && projectileBox.right < playerBox.left + playerBox.width - playerBox.width / 3) {
-            console.log("you have been hit");
+            // console.log("you have been hit");
             primaryHit(projectileBox);
             enemyProjectiles[i].remove();
             playerShip.health -= currentEnemySmallDamage;
             playerShip.scoreMultiplier = playerShip.scoreMultiplier / 4;
-            console.log(playerShip.health);
+            // console.log(playerShip.health);
 
 
         }
@@ -1523,19 +1771,20 @@ function enemyShots() {
                     bossBullet.classList.add("bossbullet" + bossRainIndex);
                     $(".bossbullet" + bossBulletIndex).animate({ top:  Math.random() * (bossBox.top) + "px" }, { duration: duration, queue: false });
                     $(".bossbullet" + bossBulletIndex).animate({ left:  Math.random() * (window.innerWidth) + "px" }, { duration: duration, queue: false ,complete: function(){
-                        console.log("testing 1");
+                        // console.log("testing 1");
                         
-                        $(".bossbullet" + bossRainIndex).animate({ top:  ( window.innerHeight + 100 )+ "px" }, { duration: duration, queue: false });
+                        $(".bossbullet" + bossRainIndex).animate({ top:  ( window.innerHeight + 100 )+ "px" }, { duration: duration, queue: false, complete: function(){
+
+                            bossBullet.remove();
+
+                        } });
                         
                         
                         
 
                         
                     }});
-                    setTimeout(function () {
-                            
-                        bossBullet.remove();
-                    }, duration*3);
+                   
                     bossBulletIndex++;
                   
 
@@ -1796,6 +2045,13 @@ $(document).keyup(function (event) {
     }
 
 });
+
+
+
+
+
+
+
 
 // ************************************************************************************************************************************************
 // ************************************************************************************************************************************************
